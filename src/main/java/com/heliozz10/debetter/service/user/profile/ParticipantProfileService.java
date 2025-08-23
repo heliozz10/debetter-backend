@@ -91,11 +91,15 @@ public class ParticipantProfileService implements ProfileService {
         User user = entityManager.getReference(User.class, userId);
         profile.setUser(user);
 
-        City city = commonService.findOrCreateEntity(cityDto.name(), City.class, entityManager);
-        profile.setCity(city);
+        if(cityDto != null && cityDto.name() != null) {
+            City city = commonService.findOrCreateEntity(cityDto.name(), City.class, entityManager);
+            profile.setCity(city);
+        }
 
-        Institution institution = commonService.findOrCreateEntity(institutionDto.name(), Institution.class, entityManager);
-        profile.setInstitution(institution);
+        if(institutionDto != null && institutionDto.name() != null) {
+            Institution institution = commonService.findOrCreateEntity(institutionDto.name(), Institution.class, entityManager);
+            profile.setInstitution(institution);
+        }
 
         return participantProfileRepository.save(profile);
     }

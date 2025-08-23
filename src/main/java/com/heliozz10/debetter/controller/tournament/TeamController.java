@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class TeamController {
 
     private final TournamentService tournamentService;
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
     public PageableResult<SimpleTeamView> getTeamsByTournamentId(
             @PathVariable Long tournamentId,
@@ -40,28 +42,27 @@ public class TeamController {
         );
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public TeamView getTeamByTournamentIdAndId(@PathVariable Long tournamentId, @PathVariable Long id) {
         return teamMapper.toTeamView(teamService.getTeamByTournamentIdAndId(id));
     }
 
+    @PreAuthorize("principal.role.name() == 'PARTICIPANT'")
     @PostMapping
     public void registerTeamToTournament(@PathVariable Long tournamentId, @RequestBody TeamFormDto dto) {
         tournamentService.registerTeamToTournament(dto, tournamentId);
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping("/{id}/organizer-update")
     public void updateTeam_Organizer(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody TeamUpdateOrganizerDto dto) {
         teamService.updateTeam_Organizer(dto, tournamentId, id);
     }
 
+    @PreAuthorize("principal.role.name() = 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @PatchMapping("/{id}/participant-update")
     public void updateTeam_Participant(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody TeamUpdateParticipantDto dto) {
         teamService.updateTeam_Participant(dto, tournamentId, id);
-    }
-
-    @DeleteMapping("/{id}")
-    public void removeTeamFromTournament(@PathVariable Long tournamentId, @PathVariable Long id) {
-        tournamentService.removeTeamFromTournament(tournamentId, id);
     }
 }

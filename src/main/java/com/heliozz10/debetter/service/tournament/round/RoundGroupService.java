@@ -54,14 +54,10 @@ public class RoundGroupService {
      */
     @Transactional
     public void proceedToNextRound(Long tournamentId, Long roundGroupId) {
-        RoundGroup roundGroup = roundGroupRepository.findById(roundGroupId)
+        RoundGroup roundGroup = roundGroupRepository.findByTournamentIdAndId(tournamentId, roundGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Round group not found"));
 
         Tournament tournament = roundGroup.getTournament();
-
-        if(!Objects.equals(tournament.getId(), tournamentId)) {
-            throw new EntityNotFoundException("Round group not found");
-        }
 
         if(!tournament.getStarted()) {
             throw new IllegalStateException("Tournament is not started");

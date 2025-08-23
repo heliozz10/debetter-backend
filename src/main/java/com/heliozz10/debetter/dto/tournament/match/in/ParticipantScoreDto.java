@@ -1,6 +1,9 @@
 package com.heliozz10.debetter.dto.tournament.match.in;
 
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
 public record ParticipantScoreDto (
-    Long participantId,
-    Integer score
+        @Positive Long participantId,
+        Integer score
 ) {}

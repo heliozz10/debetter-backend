@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
@@ -57,4 +58,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Modifying
     @Query("update Team t set t.name = ?1, t.club = ?2 where t.id = ?3")
     int updateNameAndClubById(String name, Club club, Long id);
+
+    Optional<Team> findByTournamentIdAndId(Long tournamentId, Long id);
 }

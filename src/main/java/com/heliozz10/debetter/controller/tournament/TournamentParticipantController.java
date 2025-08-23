@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class TournamentParticipantController {
     private final TournamentParticipantService tournamentParticipantService;
     private final TournamentParticipantMapper tournamentParticipantMapper;
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
     public PageableResult<SimpleTournamentParticipantView> getTournamentParticipants(
             @PathVariable Long tournamentId,
@@ -34,6 +36,7 @@ public class TournamentParticipantController {
         );
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{participantId}")
     public TournamentParticipantView getTournamentParticipant(@PathVariable Long tournamentId, @PathVariable Long participantId) {
         return tournamentParticipantMapper.toTournamentParticipantView(tournamentParticipantService.getParticipantByTournamentIdAndId(tournamentId, participantId));

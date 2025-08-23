@@ -12,11 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
+@PreAuthorize("principal.role.name() == 'ORGANIZER'")
 @RequestMapping("/organizer-invitations")
 public class OrganizerInvitationController {
     private final OrganizerInvitationService organizerInvitationService;
@@ -60,12 +62,14 @@ public class OrganizerInvitationController {
     }
 
     @PostMapping("/accept/{id}")
-    public void acceptInvitation(@PathVariable Long id) {
-        organizerInvitationService.acceptInvitation(id);
+    public void acceptInvitation(@PathVariable Long id, Authentication authentication) {
+        Long inviteeId = ((User) authentication.getPrincipal()).getProfile().getId();
+        organizerInvitationService.acceptInvitation(id, inviteeId);
     }
 
     @PostMapping("/reject/{id}")
-    public void rejectInvitation(@PathVariable Long id) {
-        organizerInvitationService.rejectInvitation(id);
+    public void rejectInvitation(@PathVariable Long id, Authentication authentication) {
+        Long inviteeId = ((User) authentication.getPrincipal()).getProfile().getId();
+        organizerInvitationService.rejectInvitation(id, inviteeId);
     }
 }

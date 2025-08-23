@@ -64,8 +64,8 @@ public class OrganizerInvitationService {
     }
 
     @Transactional
-    public void acceptInvitation(Long invitationId) {
-        OrganizerInvitation invitation = organizerInvitationRepository.findById(invitationId)
+    public void acceptInvitation(Long invitationId, Long inviteeId) {
+        OrganizerInvitation invitation = organizerInvitationRepository.findByInviteeIdAndId(invitationId, inviteeId)
                 .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
 
         invitation.setAccepted(true);
@@ -74,12 +74,15 @@ public class OrganizerInvitationService {
     }
 
     @Transactional
-    public void rejectInvitation(Long invitationId) {
-        deleteInvitation(invitationId);
+    public void rejectInvitation(Long invitationId, Long inviteeId) {
+        deleteInvitation(invitationId, inviteeId);
     }
 
     @Transactional
-    public void deleteInvitation(Long invitationId) {
+    public void deleteInvitation(Long invitationId, Long inviteeId) {
+        OrganizerInvitation invitation = organizerInvitationRepository.findByInviteeIdAndId(inviteeId, invitationId)
+                .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+
         organizerInvitationRepository.deleteById(invitationId);
     }
 }

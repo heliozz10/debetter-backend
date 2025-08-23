@@ -12,6 +12,7 @@ import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.content.user.profile.Profile;
+import com.heliozz10.debetter.content.user.role.TournamentRole;
 import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.content.util.request.OrganizerInvitation;
 import com.heliozz10.debetter.dto.tournament.in.OrganizerSelectorDto;
@@ -38,6 +39,7 @@ import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.repository.user.UserRepository;
 import com.heliozz10.debetter.repository.user.profile.OrganizerProfileRepository;
 import com.heliozz10.debetter.repository.user.profile.ParticipantProfileRepository;
+import com.heliozz10.debetter.security.tournament.TournamentSecurity;
 import com.heliozz10.debetter.service.CommonService;
 import com.heliozz10.debetter.service.tournament.round.RoundService;
 import com.heliozz10.debetter.service.user.UserService;
@@ -53,6 +55,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -66,6 +69,7 @@ public class TournamentService {
 
     private final TournamentRepository tournamentRepository;
     private final TournamentMapper tournamentMapper;
+    private final TournamentSecurity tournamentSecurity;
 
     private final TournamentParticipantRepository tournamentParticipantRepository;
 
@@ -126,8 +130,10 @@ public class TournamentService {
             throw new IllegalArgumentException("If the preliminary format is Karl Popper, the team elimination format must also be Karl Popper and vice versa");
         }
 
+        int teamLimit = dto.teamLimit() != null ? dto.teamLimit() : Integer.MAX_VALUE;
+
         if(
-                dto.teamLimit() < Math.pow(2, dto.eliminationRoundCount())
+                teamLimit < Math.pow(2, dto.eliminationRoundCount())
         ) {
             throw new IllegalArgumentException("The team limit must be at least 2^eliminationRoundCount. " + dto.eliminationRoundCount() + " elimination rounds are not possible with a team limit of " + dto.teamLimit());
         }
@@ -139,14 +145,18 @@ public class TournamentService {
         tournament.setStarted(false);
         tournament.setFinished(false);
 
+        generateRounds(tournament, dto.preliminaryRoundCount(), dto.eliminationRoundCount());
+
+        Tournament persistedTournament = tournamentRepository.save(tournament);
+
         if(dto.image() != null) {
-            Url url = fileService.uploadFile(dto.image(), "tournaments/thumbnails", tournament.getId().toString());
+            Url url = fileService.uploadFile(dto.image(), "tournaments/thumbnails", persistedTournament.getId().toString());
             tournament.setImageUrl(url);
         }
 
-        generateRounds(tournament, dto.preliminaryRoundCount(), dto.eliminationRoundCount());
+        tournamentSecurity.assignRoleToUser(organizer.getUser().getId(), persistedTournament.getId(), TournamentRole.FULL);
 
-        return tournamentRepository.save(tournament);
+        return persistedTournament;
     }
 
     private void generateRounds(Tournament tournament, int preliminaryRoundCount, int eliminationRoundCount) {
@@ -240,6 +250,8 @@ public class TournamentService {
 
         tournament.getOrganizers().add(organizer);
         organizer.getCoOrganizedTournaments().add(tournament);
+
+        tournamentSecurity.assignRoleToUser(organizer.getUser().getId(), tournamentId, TournamentRole.EDIT);
     }
 
     @Transactional
@@ -253,6 +265,8 @@ public class TournamentService {
                 .orElseThrow(() -> new EntityNotFoundException("Organizer not found"));
 
         organizer.getCoOrganizedTournaments().removeIf(t -> Objects.equals(t.getId(), tournamentId));
+
+        tournamentSecurity.removeRoleFromUser(organizer.getUser().getId(), tournamentId, TournamentRole.EDIT);
     }
 
     //TEAMS
@@ -260,6 +274,10 @@ public class TournamentService {
     public void registerTeamToTournament(TeamFormDto teamFormDto, Long tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
                 .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
+
+        if(LocalDateTime.now().isAfter(tournament.getRegistrationDeadline())) {
+            throw new IllegalArgumentException("Cannot register after the registration deadline");
+        }
 
         validateTeamLimit(tournament, teamFormDto);
 
@@ -287,6 +305,8 @@ public class TournamentService {
         participant.setParticipantProfile(teamCreator);
 
         tournamentParticipantRepository.save(participant);
+
+        tournamentSecurity.assignRoleToUser(teamCreator.getUser().getId(), tournament.getId(), TournamentRole.VIEW);
     }
 
     private void registerInvitedParticipants(TeamFormDto teamFormDto, Tournament tournament, Team team) {
@@ -338,19 +358,22 @@ public class TournamentService {
 
     @Transactional
     public void removeTeamFromTournament(Long teamId, Long tournamentId) {
-        tournamentRepository.removeTeamFromTournament(teamId, tournamentId);
+        Team team = teamRepository.findByTournamentIdAndId(tournamentId, teamId)
+                .orElseThrow(() -> new EntityNotFoundException("Team not found"));
+
+        team.getMembers().stream().map(TournamentParticipant::getParticipantProfile).forEach(profile -> {
+            tournamentSecurity.removeRoleFromUser(profile.getId(), tournamentId, TournamentRole.VIEW);
+        });
+
+        teamRepository.deleteById(teamId);
     }
 
     //TOURNAMENT PROCESSES
 
     @Transactional
     public void checkInTeam(Long tournamentId, Long teamId) {
-        Team team = teamRepository.findById(teamId)
+        Team team = teamRepository.findByTournamentIdAndId(tournamentId, teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
-
-        if(!Objects.equals(tournamentId, team.getTournament().getId())) {
-            throw new IllegalArgumentException("Team does not belong to this tournament");
-        }
 
         if(!team.getActive()) {
             throw new IllegalArgumentException("Not all members of the team has accepted the invitation");
@@ -367,12 +390,8 @@ public class TournamentService {
 
     @Transactional
     public void uncheckInTeam(Long tournamentId, Long teamId) {
-        Team team = teamRepository.findById(teamId)
+        Team team = teamRepository.findByTournamentIdAndId(tournamentId, teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
-
-        if(!Objects.equals(tournamentId, team.getTournament().getId())) {
-            throw new IllegalArgumentException("Team does not belong to this tournament");
-        }
 
         team.setCheckedIn(false);
     }

@@ -5,6 +5,7 @@ import com.heliozz10.debetter.content.tournament.announcement.Announcement;
 import com.heliozz10.debetter.content.tournament.round.RoundGroup;
 import com.heliozz10.debetter.content.tournament.team.Team;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
+import com.heliozz10.debetter.content.user.role.UserTournamentRole;
 import com.heliozz10.debetter.content.util.media.Url;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,7 +14,9 @@ import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -86,6 +89,9 @@ public class Tournament {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DebateFormat teamEliminationFormat;
+
+    @OneToMany(mappedBy = "tournament", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserTournamentRole> tournamentRoles = new HashSet<>();
 
     @OneToMany(mappedBy = "tournament", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoundGroup> roundGroups;

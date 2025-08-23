@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,7 @@ public class FeedbackController {
     private final FeedbackMapper feedbackMapper;
 
     //TODO: special security case
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
     public PageableResult<FeedbackView> getFeedbacks(
             @PathVariable Long tournamentId,
@@ -38,11 +40,13 @@ public class FeedbackController {
         );
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public FeedbackView getFeedbackById(@PathVariable Long tournamentId, @PathVariable Long id) {
         return feedbackMapper.toFeedbackView(feedbackService.getFeedbackByTournamentIdAndId(tournamentId, id));
     }
 
+    @PreAuthorize("principal.role.name() == 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @PostMapping
     public FeedbackView addFeedback(@PathVariable Long tournamentId, @RequestBody FeedbackDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
@@ -50,13 +54,19 @@ public class FeedbackController {
         return feedbackMapper.toFeedbackView(feedbackService.addFeedbackToTournament(dto, tournamentId, profile.getId()));
     }
 
+    @PreAuthorize("principal.role.name() == 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @PatchMapping("/{id}")
-    public FeedbackView updateFeedback(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody FeedbackDto dto) {
-        return feedbackMapper.toFeedbackView(feedbackService.updateFeedback(dto, id));
+    public FeedbackView updateFeedback(Authentication authentication, @PathVariable Long id, @RequestBody FeedbackDto dto) {
+        User user = (User) authentication.getPrincipal();
+        ParticipantProfile profile = (ParticipantProfile) user.getProfile();
+        return feedbackMapper.toFeedbackView(feedbackService.updateFeedback(dto, id, profile.getId()));
     }
 
+    @PreAuthorize("principal.role.name() == 'PARTICIPANT'")
     @DeleteMapping("/{id}")
-    public void deleteFeedback(@PathVariable Long tournamentId, @PathVariable Long id) {
-        feedbackService.deleteFeedback(id);
+    public void deleteFeedback(Authentication authentication, @PathVariable Long id) {
+        User user = (User) authentication.getPrincipal();
+        ParticipantProfile profile = (ParticipantProfile) user.getProfile();
+        feedbackService.deleteFeedback(id, profile.getId());
     }
 }

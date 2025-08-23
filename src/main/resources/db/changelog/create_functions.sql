@@ -16,7 +16,7 @@ BEGIN
             debater2score INTEGER
         )
     LOOP
-        UPDATE match
+        UPDATE match m
         SET team1score    = rec.team1score,
             team2score    = rec.team2score,
             team3score    = rec.team3score,
@@ -24,8 +24,12 @@ BEGIN
             debater1score = rec.debater1score,
             debater2score = rec.debater2score,
             completed     = true
-        WHERE id = rec.match_id
-        AND tournament_id = rec.tournament_id;
+        FROM round r
+        JOIN round_group rg ON r.round_group_id = rg.id
+        JOIN tournament t   ON rg.tournament_id = t.id
+        WHERE m.round_id = r.id
+            AND m.id = rec.match_id
+            AND t.id = rec.tournament_id;
 
         UPDATE team
         SET preliminary_score = preliminary_score + rec.team1score

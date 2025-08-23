@@ -8,6 +8,7 @@ import com.heliozz10.debetter.content.tournament.match.TeamMatchupHistory;
 import com.heliozz10.debetter.content.tournament.round.Round;
 import com.heliozz10.debetter.content.tournament.team.Team;
 import com.heliozz10.debetter.dto.tournament.round.in.RoundUpdateDto;
+import com.heliozz10.debetter.mapper.tournament.round.RoundMapper;
 import com.heliozz10.debetter.repository.tournament.match.DebaterMatchupHistoryRepository;
 import com.heliozz10.debetter.repository.tournament.match.MatchRepository;
 import com.heliozz10.debetter.repository.tournament.match.TeamMatchupHistoryRepository;
@@ -26,6 +27,7 @@ import java.util.function.Consumer;
 @Service
 public class RoundService {
     private final RoundRepository roundRepository;
+    private final RoundMapper roundMapper;
 
     private final MatchRepository matchRepository;
 
@@ -33,26 +35,22 @@ public class RoundService {
     private final DebaterMatchupHistoryRepository debaterMatchupHistoryRepository;
 
     @Transactional(readOnly = true)
-    public List<Round> getRoundsByRoundGroupId(Long roundGroupId) {
-        return roundRepository.findByRoundGroupId(roundGroupId);
+    public List<Round> getRoundsByTournamentIdAndRoundGroupId(Long tournamentId, Long roundGroupId) {
+        return roundRepository.findByRoundGroup_Tournament_IdAndRoundGroup_Id(tournamentId, roundGroupId);
     }
 
     @Transactional(readOnly = true)
-    private Round getRoundById(Long id) {
-        return roundRepository.findById(id)
+    private Round getRoundByTournamentIdAndRoundGroupIdAndId(Long tournamentId, Long roundGroupId, Long id) {
+        return roundRepository.findByRoundGroup_Tournament_IdAndRoundGroup_IdAndId(tournamentId, roundGroupId, id)
                 .orElseThrow(() -> new EntityNotFoundException("Round not found"));
     }
 
     @Transactional
     public void updateRound(RoundUpdateDto roundUpdateDto, Long tournamentId, Long roundId) {
-        Round round = getRoundById(roundId);
+        Round round = roundRepository.findByRoundGroup_Tournament_IdAndId(tournamentId, roundId)
+                .orElseThrow(() -> new EntityNotFoundException("Round not found"));
 
-        if(!Objects.equals(round.getRoundGroup().getTournament().getId(), tournamentId)) {
-            throw new EntityNotFoundException("Round not found");
-        }
-
-        round.setName(roundUpdateDto.name());
-        round.setMatchesArePublic(roundUpdateDto.matchesArePublic());
+        roundMapper.updateRound(roundUpdateDto, round);
 
         if(roundUpdateDto.customFormat() != null) {
             if(!round.getMatches().isEmpty()) {
@@ -301,10 +299,9 @@ public class RoundService {
     }
 
     public void deleteRound(Long tournamentId, Long roundId) {
-        Round round = getRoundById(roundId);
-        if(!Objects.equals(round.getRoundGroup().getTournament().getId(), tournamentId)) {
-            throw new EntityNotFoundException("Round not found");
-        }
+        Round round = roundRepository.findByRoundGroup_Tournament_IdAndId(tournamentId, roundId)
+                .orElseThrow(() -> new EntityNotFoundException("Round not found"));
+
         roundRepository.deleteById(roundId);
     }
 }

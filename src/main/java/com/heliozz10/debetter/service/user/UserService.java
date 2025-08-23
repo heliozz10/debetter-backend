@@ -8,6 +8,7 @@ import com.heliozz10.debetter.content.user.profile.institution.Institution;
 import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.content.util.socials.SocialPlatform;
 import com.heliozz10.debetter.content.util.socials.SocialProfile;
+import com.heliozz10.debetter.dto.user.in.ProfilePictureDto;
 import com.heliozz10.debetter.dto.user.in.UserGetParams;
 import com.heliozz10.debetter.dto.user.in.UserRegistrationDto;
 import com.heliozz10.debetter.dto.user.in.UserUpdateDto;
@@ -75,6 +76,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public User createUser(UserRegistrationDto dto) {
         User user = userRepository.save(userMapper.toUser(dto));
+        user.setPassword(passwordEncoder.encode(dto.password()));
         if(user.getRole() == Role.PARTICIPANT) {
             participantProfileService.createProfile(user.getId(), dto.city(), dto.institution());
         } else if(user.getRole() == Role.ORGANIZER) {
@@ -102,8 +104,8 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void addOrUpdateProfilePicture(Long userId, MultipartFile file) {
-        Url url = fileService.uploadImage(file, "profile-pictures", UUID.randomUUID().toString());
+    public void addOrUpdateProfilePicture(Long userId, ProfilePictureDto dto) {
+        Url url = fileService.uploadImage(dto.file(), "profile-pictures", UUID.randomUUID().toString());
         if(userRepository.updateImageUrl(userId, url) == 0) {
             fileService.deleteFile(url);
             throw new EntityNotFoundException("User not found");
@@ -115,12 +117,6 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
         fileService.deleteFile(user.getImageUrl());
         user.setImageUrl(null);
-    }
-
-    @Transactional
-    public void addOrUpdateSocialProfiles(Collection<SocialProfileDto> newProfiles) {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        addOrUpdateSocialProfiles(user, newProfiles);
     }
 
     @Transactional
@@ -140,33 +136,21 @@ public class UserService implements UserDetailsService {
 
             if (existing != null) {
                 existing.setHandle(dto.handle());
-                existing.setIsPublic(dto.isPublic());
+                existing.setIsPublic(dto.isPublic() != null ? dto.isPublic() : true);
             } else {
                 SocialProfile newProfile = new SocialProfile();
                 newProfile.setPlatform(dto.platform());
                 newProfile.setHandle(dto.handle());
-                newProfile.setIsPublic(dto.isPublic());
+                newProfile.setIsPublic(dto.isPublic() != null ? dto.isPublic() : true);
                 user.getSocialProfiles().add(newProfile);
             }
         }
     }
 
     @Transactional
-    public void removeAllSocialProfiles() {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        user.getSocialProfiles().clear();
-    }
-
-    @Transactional
     public void removeAllSocialProfiles(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
         user.getSocialProfiles().clear();
-    }
-
-    @Transactional
-    public void removeSocialProfiles(Collection<SocialPlatform> platforms) {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        removeSocialProfiles(user, platforms);
     }
 
     @Transactional

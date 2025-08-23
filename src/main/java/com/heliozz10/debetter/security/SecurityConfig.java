@@ -33,7 +33,8 @@ public class SecurityConfig {
                         .tokenValiditySeconds(60 * 60 * 24 * 30))
                 .userDetailsService(userService)
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CustomCsrfTokenRequestHandler()))
                 .build();
     }
 }

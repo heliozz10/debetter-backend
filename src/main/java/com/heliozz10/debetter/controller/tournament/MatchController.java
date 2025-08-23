@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,12 +22,13 @@ public class MatchController {
     private final MatchService matchService;
     private final MatchMapper matchMapper;
 
+    @PreAuthorize("@tournamentSecurity.hasRoundViewPermission(principal, #roundId)")
     @GetMapping
     public PageableResult<MatchView> getMatchesByRoundId(
             @PathVariable Long roundId,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
-        Page<Match> matches = matchService.getMatchesRoundId(roundId, pageable);
+        Page<Match> matches = matchService.getMatchesByRoundId(roundId, pageable);
         return new PageableResult<>(
                 matchMapper.toMatchViews(matches.getContent()),
                 matches.getTotalElements(),
@@ -34,6 +36,7 @@ public class MatchController {
         );
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping("/{matchId}/results")
     public void submitMatchResults(
             @PathVariable Long tournamentId,

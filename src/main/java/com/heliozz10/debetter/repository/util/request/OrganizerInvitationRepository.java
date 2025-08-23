@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrganizerInvitationRepository extends JpaRepository<OrganizerInvitation, Long> {
+    Optional<OrganizerInvitation> findByInviteeIdAndId(Long inviteeId, Long id);
+
     Page<OrganizerInvitation> findByInviterId(Long inviterId, Pageable pageable);
     Page<OrganizerInvitation> findByInviteeId(Long inviteeId, Pageable pageable);
     Page<OrganizerInvitation> findByTournamentId(Long tournamentId, Pageable pageable);

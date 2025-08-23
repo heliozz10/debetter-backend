@@ -16,4 +16,5 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long>, JpaSp
     List<Feedback> findByAuthorId(Long authorId);
 
     Optional<Feedback> findByTournamentIdAndId(Long tournamentId, Long id);
+    Optional<Feedback> findByAuthorIdAndId(Long authorId, Long id);
 }

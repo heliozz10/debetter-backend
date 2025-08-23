@@ -1,6 +1,8 @@
 package com.heliozz10.debetter.dto.util.request.in;
 
+import jakarta.validation.constraints.Positive;
+
 public record ParticipantInvitationDto (
-        Long inviteeId,
-        Long teamId
+        @Positive Long inviteeId,
+        @Positive Long teamId
 ) {}

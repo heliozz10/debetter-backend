@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class JudgeController {
     private final JudgeService judgeService;
     private final JudgeMapper judgeMapper;
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
     public PageableResult<JudgeView> getJudges(
             @PathVariable Long tournamentId,
@@ -36,21 +38,25 @@ public class JudgeController {
         );
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public JudgeView getJudgeById(@PathVariable Long tournamentId, @PathVariable Long id) {
         return judgeMapper.toJudgeView(judgeService.getJudgeByTournamentIdAndId(tournamentId, id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PostMapping
     public JudgeView addJudgeToTournament(@PathVariable Long tournamentId, @RequestBody JudgeFormDto judgeFormDto) {
         return judgeMapper.toJudgeView(judgeService.addJudgeToTournament(judgeFormDto, tournamentId));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping("/{id}")
     public JudgeView updateJudge(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody JudgeFormDto judgeFormDto) {
         return judgeMapper.toJudgeView(judgeService.updateJudge(judgeFormDto, tournamentId, id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @DeleteMapping("/{id}")
     public void removeJudgeFromTournament(@PathVariable Long tournamentId, @PathVariable Long id) {
         judgeService.removeJudgeFromTournament(id, tournamentId);

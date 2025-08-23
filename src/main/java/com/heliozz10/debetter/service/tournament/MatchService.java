@@ -3,19 +3,12 @@ package com.heliozz10.debetter.service.tournament;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.heliozz10.debetter.content.tournament.DebateFormat;
-import com.heliozz10.debetter.content.tournament.Tournament;
 import com.heliozz10.debetter.content.tournament.match.Match;
-import com.heliozz10.debetter.content.tournament.round.Round;
-import com.heliozz10.debetter.content.tournament.round.RoundGroup;
-import com.heliozz10.debetter.content.tournament.round.RoundGroupType;
-import com.heliozz10.debetter.content.tournament.team.Team;
 import com.heliozz10.debetter.dto.tournament.match.in.MatchResultDto;
 import com.heliozz10.debetter.dto.tournament.match.in.ParticipantScoreDto;
 import com.heliozz10.debetter.repository.tournament.match.MatchRepository;
 import com.heliozz10.debetter.repository.tournament.round.RoundGroupRepository;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -38,7 +29,7 @@ public class MatchService {
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
-    public Page<Match> getMatchesRoundId(Long roundId, Pageable pageable) {
+    public Page<Match> getMatchesByRoundId(Long roundId, Pageable pageable) {
         return matchRepository.findByRoundId(roundId, pageable);
     }
 

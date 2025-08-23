@@ -21,6 +21,7 @@ import java.util.List;
         ParticipantProfileMapper.class
 })
 public interface UserMapper {
+    @Mapping(target = "password", ignore = true)
     User toUser(UserRegistrationDto dto);
 
     @Mapping(target = "username", ignore = true)

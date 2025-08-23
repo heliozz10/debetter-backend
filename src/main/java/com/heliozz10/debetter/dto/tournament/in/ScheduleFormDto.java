@@ -1,10 +1,11 @@
 package com.heliozz10.debetter.dto.tournament.in;
 
+import jakarta.validation.constraints.Size;
 import org.springframework.web.multipart.MultipartFile;
 
 public record ScheduleFormDto(
-    String name,
-    String description,
+    @Size(min = 1, max = 50) String name,
+    @Size(min = 1, max = 200) String description,
     MultipartFile image
 ) {
 }

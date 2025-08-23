@@ -7,6 +7,7 @@ import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.dto.tournament.announcement.in.AnnouncementFormDto;
+import com.heliozz10.debetter.dto.tournament.announcement.in.CommentDto;
 import com.heliozz10.debetter.mapper.tournament.announcement.AnnouncementMapper;
 import com.heliozz10.debetter.repository.tournament.TournamentRepository;
 import com.heliozz10.debetter.repository.tournament.announcement.AnnouncementRepository;
@@ -121,24 +122,20 @@ public class AnnouncementService {
 
     @Transactional(readOnly = true)
     public List<Comment> getAnnouncementComments(Long tournamentId, Long announcementId) {
-        Announcement announcement = announcementRepository.findById(announcementId)
+        Announcement announcement = announcementRepository.findByTournamentIdAndId(tournamentId, announcementId)
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
-
-        if(!Objects.equals(announcement.getTournament().getId(), tournamentId)) {
-            throw new EntityNotFoundException("Announcement not found");
-        }
 
         return announcement.getComments();
     }
 
     @Transactional
-    public void addCommentToAnnouncement(String content, Long announcementId, Long authorId) {
-        Announcement announcement = announcementRepository.findById(announcementId)
+    public void addCommentToAnnouncement(Long tournamentId, Long announcementId, Long authorId, CommentDto dto) {
+        Announcement announcement = announcementRepository.findByTournamentIdAndId(tournamentId, announcementId)
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
 
         User author = entityManager.getReference(User.class, authorId);
 
-        Comment comment = new Comment(content, LocalDateTime.now(), announcement, author);
+        Comment comment = new Comment(dto.content(), LocalDateTime.now(), announcement, author);
 
         announcement.getComments().add(comment);
 
@@ -147,24 +144,16 @@ public class AnnouncementService {
 
     @Transactional
     public void removeCommentFromAnnouncement(Long authorId, Long commentId) {
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository.findByAuthorIdAndId(authorId, commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
-
-        if(!Objects.equals(comment.getAuthor().getId(), authorId)) {
-            throw new EntityNotFoundException("Comment not found");
-        }
 
         comment.getAnnouncement().getComments().removeIf(c -> Objects.equals(c.getId(), commentId));
     }
 
     @Transactional
     public void removeAnnouncementFromTournament(Long announcementId, Long tournamentId) {
-        Announcement announcement = announcementRepository.findById(announcementId)
+        Announcement announcement = announcementRepository.findByTournamentIdAndId(tournamentId, announcementId)
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
-
-        if(!Objects.equals(announcement.getTournament().getId(), tournamentId)) {
-            throw new EntityNotFoundException("Announcement not found");
-        }
 
         announcementRepository.deleteById(announcementId);
     }

@@ -4,10 +4,12 @@ import com.heliozz10.debetter.content.tournament.DebateFormat;
 import com.heliozz10.debetter.content.tournament.TournamentParticipant;
 import com.heliozz10.debetter.content.tournament.team.Team;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
+import com.heliozz10.debetter.content.user.role.TournamentRole;
 import com.heliozz10.debetter.content.util.request.ParticipantInvitation;
 import com.heliozz10.debetter.repository.tournament.TournamentParticipantRepository;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.repository.util.request.ParticipantInvitationRepository;
+import com.heliozz10.debetter.security.tournament.TournamentSecurity;
 import com.heliozz10.debetter.service.tournament.TeamService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,6 +35,8 @@ public class ParticipantInvitationService {
     private final TeamService teamService;
 
     private final TournamentParticipantRepository tournamentParticipantRepository;
+
+    private final TournamentSecurity tournamentSecurity;
 
     @Transactional(readOnly = true)
     public Page<ParticipantInvitation> getInvitationsByInviteeId(Long inviteeId, Pageable pageable) {
@@ -105,8 +109,8 @@ public class ParticipantInvitationService {
     }
 
     @Transactional
-    public void acceptInvitation(Long invitationId) {
-        ParticipantInvitation invitation = participantInvitationRepository.findById(invitationId)
+    public void acceptInvitation(Long invitationId, Long inviteeId) {
+        ParticipantInvitation invitation = participantInvitationRepository.findByInviteeIdAndId(inviteeId, invitationId)
                 .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
 
         invitation.setAccepted(true);
@@ -127,15 +131,20 @@ public class ParticipantInvitationService {
         participant.setParticipantProfile(invitation.getInvitee());
 
         tournamentParticipantRepository.save(participant);
+
+        tournamentSecurity.assignRoleToUser(invitation.getInvitee().getUser().getId(), team.getTournament().getId(), TournamentRole.VIEW);
     }
 
     @Transactional
-    public void rejectInvitation(Long invitationId) {
-        deleteInvitation(invitationId);
+    public void rejectInvitation(Long invitationId, Long inviteeId) {
+        deleteInvitation(invitationId, inviteeId);
     }
 
     @Transactional
-    public void deleteInvitation(Long invitationId) {
+    public void deleteInvitation(Long invitationId, Long inviteeId) {
+        ParticipantInvitation invitation = participantInvitationRepository.findByInviteeIdAndId(inviteeId, invitationId)
+                .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
+
         participantInvitationRepository.deleteById(invitationId);
     }
 }

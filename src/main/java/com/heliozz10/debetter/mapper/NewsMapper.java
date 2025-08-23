@@ -10,12 +10,14 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring",
+@Mapper(
+        componentModel = "spring",
         uses = {
                 TagMapper.class,
                 OrganizerProfileMapper.class
         },
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
 public interface NewsMapper {
     News toNews(NewsDto newsDto);
     void updateNews(NewsDto newsDto, @MappingTarget News news);

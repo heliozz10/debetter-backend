@@ -6,6 +6,7 @@ import com.heliozz10.debetter.dto.tournament.out.ScheduleView;
 import com.heliozz10.debetter.mapper.tournament.ScheduleMapper;
 import com.heliozz10.debetter.service.tournament.ScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,21 +18,25 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
     private final ScheduleMapper scheduleMapper;
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
     public List<ScheduleView> getSchedulesByTournamentId(@PathVariable Long tournamentId) {
         return scheduleMapper.toScheduleViews(scheduleService.getSchedulesByTournamentId(tournamentId));
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public ScheduleView getScheduleByTournamentIdAndId(@PathVariable Long tournamentId, @PathVariable Long id) {
         return scheduleMapper.toScheduleView(scheduleService.getScheduleByTournamentIdAndId(tournamentId, id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PostMapping
     public ScheduleView addScheduleToTournament(@PathVariable Long tournamentId, @RequestBody ScheduleFormDto scheduleFormDto) {
         return scheduleMapper.toScheduleView(scheduleService.addScheduleToTournament(scheduleFormDto, tournamentId));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @DeleteMapping("/{id}")
     public void removeScheduleFromTournament(@PathVariable Long id, @PathVariable Long tournamentId) {
         scheduleService.removeScheduleFromTournament(id, tournamentId);

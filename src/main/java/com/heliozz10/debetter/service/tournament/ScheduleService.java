@@ -56,15 +56,11 @@ public class ScheduleService {
 
     @Transactional
     public void removeScheduleFromTournament(Long scheduleId, Long tournamentId) {
-        Schedule schedule = scheduleRepository.findById(scheduleId)
+        Schedule schedule = scheduleRepository.findByTournamentIdAndId(tournamentId, scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule not found"));
-
-        if(!Objects.equals(schedule.getTournament().getId(), tournamentId)) {
-            throw new EntityNotFoundException("Schedule not found");
-        }
 
         fileService.deleteFile(schedule.getImageUrl());
 
-        scheduleRepository.removeScheduleFromTournament(scheduleId, tournamentId);
+        scheduleRepository.deleteById(scheduleId);
     }
 }

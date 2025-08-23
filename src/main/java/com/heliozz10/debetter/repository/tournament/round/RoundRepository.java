@@ -42,4 +42,10 @@ public interface RoundRepository extends JpaRepository<Round, Long> {
     @Modifying
     @Query(value = "SELECT assign_judges_for_round(:roundId)", nativeQuery = true)
     void assignJudgesForRound(@Param("roundId") Long roundId);
+
+    Optional<Round> findByRoundGroup_Tournament_IdAndId(Long id, Long id1);
+
+    List<Round> findByRoundGroup_Tournament_IdAndRoundGroup_Id(Long id, Long id1);
+
+    Optional<Round> findByRoundGroup_Tournament_IdAndRoundGroup_IdAndId(Long id, Long id1, Long id2);
 }

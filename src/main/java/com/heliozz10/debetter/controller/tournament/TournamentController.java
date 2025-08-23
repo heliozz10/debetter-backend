@@ -4,7 +4,6 @@ import com.heliozz10.debetter.content.tournament.DebateFormat;
 import com.heliozz10.debetter.content.tournament.round.RoundGroupType;
 import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
-import com.heliozz10.debetter.dto.common.in.IdDto;
 import com.heliozz10.debetter.dto.common.out.PageableResult;
 import com.heliozz10.debetter.dto.tournament.in.DebateFormatDto;
 import com.heliozz10.debetter.dto.tournament.in.TournamentFormDto;
@@ -20,6 +19,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,6 +52,7 @@ public class TournamentController {
         return tournamentMapper.toTournamentView(tournamentService.getTournamentById(id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER'")
     @PostMapping
     public TournamentView createTournament(@RequestBody TournamentFormDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
@@ -59,56 +60,67 @@ public class TournamentController {
         return tournamentMapper.toTournamentView(tournamentService.createTournament(dto, profile.getId()));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #id)")
     @PatchMapping("/{id}")
     public TournamentView updateTournament(@PathVariable Long id, @RequestBody TournamentFormDto dto) {
         return tournamentMapper.toTournamentView(tournamentService.updateTournament(dto, id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasFullPermission(principal, #id)")
     @DeleteMapping("/{id}")
     public void deleteTournament(@PathVariable Long id) {
         tournamentService.deleteTournament(id);
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #id)")
     @GetMapping("/{id}/main-organizer")
     public UserView getMainOrganizer(@PathVariable Long id) {
         return userMapper.toUserView(tournamentService.getMainOrganizer(id).get());
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #id)")
     @GetMapping("/{id}/organizers")
     public List<SimpleUserView> getOrganizers(@PathVariable Long id) {
         return userMapper.toSimpleUserViews(tournamentService.getOrganizers(id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasFullPermission(principal, #id)")
     @DeleteMapping("/{id}/organizers/{organizerId}")
     public void removeOrganizerFromTournament(@PathVariable Long id, @PathVariable Long organizerId) {
         tournamentService.removeOrganizerFromTournament(id, organizerId);
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasFullPermission(principal, #id)")
     @PatchMapping("/{id}/enable")
     public void enableTournament(@PathVariable Long id) {
         tournamentService.enableTournament(id);
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasFullPermission(principal, #id)")
     @PatchMapping("/{id}/disable")
     public void disableTournament(@PathVariable Long id) {
         tournamentService.disableTournament(id);
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #id)")
     @PatchMapping("{id}/teams/{teamId}/check-in")
     public void checkInTeam(@PathVariable Long id, @PathVariable Long teamId) {
         tournamentService.checkInTeam(id, teamId);
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #id)")
     @PatchMapping("{id}/teams/{teamId}/uncheck-in")
     public void uncheckInTeam(@PathVariable Long id, @PathVariable Long teamId) {
         tournamentService.uncheckInTeam(id, teamId);
     }
 
-    @PatchMapping("{id}/teams/{teamId}/remove")
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #id)")
+    @DeleteMapping("{id}/teams/{teamId}")
     public void removeTeamFromTournament(@PathVariable Long id, @PathVariable Long teamId) {
         tournamentService.removeTeamFromTournament(teamId, id);
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #id)")
     @PatchMapping("{id}/start")
     public void startTournament(@PathVariable Long id) {
         tournamentService.startTournament(id);

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -55,8 +56,9 @@ public class FeedbackService {
     }
 
     @Transactional
-    public Feedback updateFeedback(FeedbackDto dto, Long feedbackId) {
-        Feedback feedback = entityManager.getReference(Feedback.class, feedbackId);
+    public Feedback updateFeedback(FeedbackDto dto, Long feedbackId, Long authorId) {
+        Feedback feedback = feedbackRepository.findByAuthorIdAndId(authorId, feedbackId)
+                .orElseThrow(() -> new EntityNotFoundException("Feedback not found"));
 
         feedbackMapper.updateFeedback(dto, feedback);
         feedback.setEdited(true);
@@ -65,8 +67,10 @@ public class FeedbackService {
     }
 
     @Transactional
-    public void deleteFeedback(Long feedbackId) {
-        Feedback feedback = entityManager.getReference(Feedback.class, feedbackId);
+    public void deleteFeedback(Long feedbackId, Long authorId) {
+        Feedback feedback = feedbackRepository.findByAuthorIdAndId(authorId, feedbackId)
+                .orElseThrow(() -> new EntityNotFoundException("Feedback not found"));
+
         feedbackRepository.delete(feedback);
     }
 }

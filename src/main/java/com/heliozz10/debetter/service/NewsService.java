@@ -59,8 +59,8 @@ public class NewsService {
     }
 
     @Transactional
-    public News updateNews(NewsDto newsDto, Long newsId) {
-        News news = newsRepository.findById(newsId).orElseThrow(() -> new EntityNotFoundException("News not found"));
+    public News updateNews(NewsDto newsDto, Long newsId, Long authorId) {
+        News news = newsRepository.findByAuthorIdAndId(authorId, newsId).orElseThrow(() -> new EntityNotFoundException("News not found"));
 
         newsMapper.updateNews(newsDto, news);
 
@@ -71,9 +71,10 @@ public class NewsService {
     }
 
     @Transactional
-    public void deleteNews(Long newsId) {
-        newsRepository.findThumbnailUrlByNewsId(newsId).ifPresent(fileService::deleteFile);
-        newsRepository.findImagesByNewsId(newsId).forEach(fileService::deleteFile);
+    public void deleteNews(Long newsId, Long authorId) {
+        News news = newsRepository.findByAuthorIdAndId(authorId, newsId).orElseThrow(() -> new EntityNotFoundException("News not found"));
+        fileService.deleteFile(news.getThumbnailUrl());
+        news.getImages().forEach(fileService::deleteFile);
         newsRepository.deleteById(newsId);
     }
 

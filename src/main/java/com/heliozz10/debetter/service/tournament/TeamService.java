@@ -62,27 +62,24 @@ public class TeamService {
 
     @Transactional
     public int updateTeam_Organizer(TeamUpdateOrganizerDto teamUpdateOrganizerDto, Long tournamentId, Long teamId) {
-        Team team = teamRepository.findById(teamId)
+        Team team = teamRepository.findByTournamentIdAndId(tournamentId, teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
-        if(!Objects.equals(tournamentId, team.getTournament().getId())) {
-            throw new IllegalArgumentException("Team does not belong to this tournament");
-        }
-
-        return teamRepository.updateNameById(teamUpdateOrganizerDto.name(), teamId);
+        return teamRepository.updateNameById(teamUpdateOrganizerDto.name() != null ? teamUpdateOrganizerDto.name() : team.getName(), teamId);
     }
 
     @Transactional
     public int updateTeam_Participant(TeamUpdateParticipantDto teamUpdateParticipantDto, Long tournamentId, Long teamId) {
-        Team team = teamRepository.findById(teamId)
+        Team team = teamRepository.findByTournamentIdAndId(tournamentId, teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
-        if(!Objects.equals(tournamentId, team.getTournament().getId())) {
-            throw new IllegalArgumentException("Team does not belong to this tournament");
-        }
-
-        return teamRepository.updateNameAndClubById(teamUpdateParticipantDto.name(), commonService.findOrCreateEntity(teamUpdateParticipantDto.club(), Club.class, entityManager), teamId);
+        return teamRepository.updateNameAndClubById(
+                teamUpdateParticipantDto.name() != null ? teamUpdateParticipantDto.name() : team.getName(),
+                teamUpdateParticipantDto.club() != null ? commonService.findOrCreateEntity(teamUpdateParticipantDto.club(), Club.class, entityManager) : team.getClub(),
+                teamId
+        );
     }
+
     /**
      * Validates that adding one more member won't exceed max size.
      */

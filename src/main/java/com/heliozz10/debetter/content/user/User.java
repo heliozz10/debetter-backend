@@ -1,6 +1,7 @@
 package com.heliozz10.debetter.content.user;
 
 import com.heliozz10.debetter.content.user.profile.Profile;
+import com.heliozz10.debetter.content.user.role.UserTournamentRole;
 import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.content.util.socials.SocialProfile;
 import jakarta.persistence.*;
@@ -8,10 +9,14 @@ import lombok.*;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -56,6 +61,9 @@ public class User implements UserDetails {
     )
     private List<Authority> authorities;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserTournamentRole> tournamentRoles;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -94,7 +102,7 @@ public class User implements UserDetails {
     }
 
     @Override
-    public List<Authority> getAuthorities() {
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
     }
 }

@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@NamedEntityGraph(
+        name = "ParticipantInvitation.with"
+)
 @Entity
 @Table(name = "participant_invitation", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"inviter_id", "invitee_id", "team_id"})

@@ -17,6 +17,25 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Indexed
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "News.withDetails",
+                attributeNodes = {
+                        @NamedAttributeNode(value = "author", subgraph = "authorSubgraph"),
+                        @NamedAttributeNode("thumbnailUrl"),
+                        @NamedAttributeNode("images"),
+                        @NamedAttributeNode("tags")
+                },
+                subgraphs = {
+                        @NamedSubgraph(
+                                name = "authorSubgraph",
+                                attributeNodes = {
+                                        @NamedAttributeNode("user")
+                                }
+                        )
+                }
+        )
+})
 @Entity
 @Table(name = "news")
 public class News {

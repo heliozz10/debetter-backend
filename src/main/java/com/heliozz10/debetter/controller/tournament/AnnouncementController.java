@@ -6,6 +6,7 @@ import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.dto.common.out.PageableResult;
 import com.heliozz10.debetter.dto.tournament.announcement.in.AnnouncementFormDto;
+import com.heliozz10.debetter.dto.tournament.announcement.in.CommentDto;
 import com.heliozz10.debetter.dto.tournament.announcement.out.AnnouncementView;
 import com.heliozz10.debetter.dto.tournament.announcement.out.CommentView;
 import com.heliozz10.debetter.mapper.tournament.announcement.AnnouncementMapper;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +30,7 @@ public class AnnouncementController {
     private final AnnouncementMapper announcementMapper;
     private final CommentMapper commentMapper;
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
     public PageableResult<AnnouncementView> getAnnouncementsByTournamentId(
             @PathVariable Long tournamentId,
@@ -44,11 +47,13 @@ public class AnnouncementController {
         );
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public AnnouncementView getAnnouncementById(@PathVariable Long tournamentId, @PathVariable Long id) {
         return announcementMapper.toAnnouncementView(announcementService.getAnnouncementByTournamentIdAndId(tournamentId, id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PostMapping
     public AnnouncementView addAnnouncement(@PathVariable Long tournamentId, @RequestBody AnnouncementFormDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
@@ -56,6 +61,7 @@ public class AnnouncementController {
         return announcementMapper.toAnnouncementView(announcementService.addAnnouncementToTournament(dto, tournamentId, profile.getId()));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping("/{id}")
     public AnnouncementView updateAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody AnnouncementFormDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
@@ -63,20 +69,27 @@ public class AnnouncementController {
         return announcementMapper.toAnnouncementView(announcementService.updateAnnouncement(dto, tournamentId, id, profile.getId()));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @DeleteMapping("/{id}")
     public void removeAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id) {
         announcementService.removeAnnouncementFromTournament(tournamentId, id);
     }
 
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}/comments")
     public List<CommentView> getAnnouncementComments(@PathVariable Long tournamentId, @PathVariable Long id) {
         return commentMapper.toCommentViews(announcementService.getAnnouncementComments(tournamentId, id));
     }
 
+    @PostMapping("/{id}/comments")
+    public void addCommentToAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody CommentDto dto, Authentication authentication) {
+        Long authorId = ((User) authentication.getPrincipal()).getId();
+        announcementService.addCommentToAnnouncement(tournamentId, id, authorId, dto);
+    }
+
     @DeleteMapping("/{id}/comments/{commentId}")
     public void removeCommentFromAnnouncement(@PathVariable Long commentId, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        ParticipantProfile profile = (ParticipantProfile) user.getProfile();
-        announcementService.removeCommentFromAnnouncement(profile.getId(), commentId);
+        Long authorId = ((User) authentication.getPrincipal()).getId();
+        announcementService.removeCommentFromAnnouncement(authorId, commentId);
     }
 }

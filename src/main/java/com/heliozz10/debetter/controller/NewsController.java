@@ -1,6 +1,7 @@
 package com.heliozz10.debetter.controller;
 
 import com.heliozz10.debetter.content.News;
+import com.heliozz10.debetter.content.user.Role;
 import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.dto.common.out.PageableResult;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,6 +43,7 @@ public class NewsController {
         return newsMapper.toNewsView(newsService.getNewsById(id));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER'")
     @PostMapping
     public NewsView createNews(@RequestBody NewsDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
@@ -48,13 +51,17 @@ public class NewsController {
         return newsMapper.toNewsView(newsService.createNews(dto, profile.getId()));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER'")
     @PatchMapping("/{id}")
-    public NewsView updateNews(@PathVariable Long id, @RequestBody NewsDto dto) {
-        return newsMapper.toNewsView(newsService.updateNews(dto, id));
+    public NewsView updateNews(@PathVariable Long id, @RequestBody NewsDto dto, Authentication authentication) {
+        Long authorId = ((User) authentication.getPrincipal()).getProfile().getId();
+        return newsMapper.toNewsView(newsService.updateNews(dto, id, authorId));
     }
 
+    @PreAuthorize("principal.role.name() == 'ORGANIZER'")
     @DeleteMapping("/{id}")
-    public void deleteNews(@PathVariable Long id) {
-        newsService.deleteNews(id);
+    public void deleteNews(@PathVariable Long id, Authentication authentication) {
+        Long authorId = ((User) authentication.getPrincipal()).getProfile().getId();
+        newsService.deleteNews(id, authorId);
     }
 }
