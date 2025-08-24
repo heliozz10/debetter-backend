@@ -33,7 +33,7 @@ public class ParticipantInvitationController {
         ParticipantProfile profile = (ParticipantProfile) user.getProfile();
         Page<ParticipantInvitation> invitations = participantInvitationService.getInvitationsByInviterId(profile.getId(), pageable);
         return new PageableResult<>(
-                participantInvitationMapper.toParticipantInvitationViews(invitations.getContent()),
+                invitations.getContent().stream().map(participantInvitationService::toParticipantInvitationView).toList(),
                 invitations.getTotalElements(),
                 invitations.getTotalPages()
         );
@@ -48,7 +48,7 @@ public class ParticipantInvitationController {
         ParticipantProfile profile = (ParticipantProfile) user.getProfile();
         Page<ParticipantInvitation> invitations = participantInvitationService.getInvitationsByInviteeId(profile.getId(), pageable);
         return new PageableResult<>(
-                participantInvitationMapper.toParticipantInvitationViews(invitations.getContent()),
+                invitations.getContent().stream().map(participantInvitationService::toParticipantInvitationView).toList(),
                 invitations.getTotalElements(),
                 invitations.getTotalPages()
         );

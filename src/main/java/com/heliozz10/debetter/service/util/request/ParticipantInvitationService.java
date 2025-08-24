@@ -6,6 +6,9 @@ import com.heliozz10.debetter.content.tournament.team.Team;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.content.user.role.TournamentRole;
 import com.heliozz10.debetter.content.util.request.ParticipantInvitation;
+import com.heliozz10.debetter.dto.util.request.out.ParticipantInvitationView;
+import com.heliozz10.debetter.mapper.user.UserMapper;
+import com.heliozz10.debetter.mapper.util.request.ParticipantInvitationMapper;
 import com.heliozz10.debetter.repository.tournament.TournamentParticipantRepository;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.repository.util.request.ParticipantInvitationRepository;
@@ -30,6 +33,7 @@ public class ParticipantInvitationService {
     private final EntityManager entityManager;
 
     private final ParticipantInvitationRepository participantInvitationRepository;
+    private final ParticipantInvitationMapper participantInvitationMapper;
 
     private final TeamRepository teamRepository;
     private final TeamService teamService;
@@ -37,6 +41,8 @@ public class ParticipantInvitationService {
     private final TournamentParticipantRepository tournamentParticipantRepository;
 
     private final TournamentSecurity tournamentSecurity;
+
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public Page<ParticipantInvitation> getInvitationsByInviteeId(Long inviteeId, Pageable pageable) {
@@ -146,5 +152,12 @@ public class ParticipantInvitationService {
                 .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
 
         participantInvitationRepository.deleteById(invitationId);
+    }
+
+    public ParticipantInvitationView toParticipantInvitationView(ParticipantInvitation invitation) {
+        ParticipantInvitationView view = participantInvitationMapper.toParticipantInvitationView(invitation);
+        view.setInviter(userMapper.toSimpleUserView(invitation.getInviter().getUser()));
+        view.setInvitee(userMapper.toSimpleUserView(invitation.getInvitee().getUser()));
+        return view;
     }
 }

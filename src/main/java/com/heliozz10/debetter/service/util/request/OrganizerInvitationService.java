@@ -3,6 +3,9 @@ package com.heliozz10.debetter.service.util.request;
 import com.heliozz10.debetter.content.tournament.Tournament;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.util.request.OrganizerInvitation;
+import com.heliozz10.debetter.dto.util.request.out.OrganizerInvitationView;
+import com.heliozz10.debetter.mapper.user.UserMapper;
+import com.heliozz10.debetter.mapper.util.request.OrganizerInvitationMapper;
 import com.heliozz10.debetter.repository.util.request.OrganizerInvitationRepository;
 import com.heliozz10.debetter.service.tournament.TournamentService;
 import jakarta.persistence.EntityManager;
@@ -21,8 +24,11 @@ public class OrganizerInvitationService {
     private final EntityManager entityManager;
 
     private final OrganizerInvitationRepository organizerInvitationRepository;
+    private final OrganizerInvitationMapper organizerInvitationMapper;
 
     private final TournamentService tournamentService;
+
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public Page<OrganizerInvitation> getInvitationsByInviteeId(Long inviteeId, Pageable pageable) {
@@ -84,5 +90,12 @@ public class OrganizerInvitationService {
                 .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
 
         organizerInvitationRepository.deleteById(invitationId);
+    }
+
+    public OrganizerInvitationView toOrganizerInvitationView(OrganizerInvitation invitation) {
+        OrganizerInvitationView view = organizerInvitationMapper.toOrganizerInvitationView(invitation);
+        view.setInviter(userMapper.toSimpleUserView(invitation.getInviter().getUser()));
+        view.setInvitee(userMapper.toSimpleUserView(invitation.getInvitee().getUser()));
+        return view;
     }
 }

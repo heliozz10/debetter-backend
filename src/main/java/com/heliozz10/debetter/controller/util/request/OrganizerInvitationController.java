@@ -6,6 +6,7 @@ import com.heliozz10.debetter.content.util.request.OrganizerInvitation;
 import com.heliozz10.debetter.dto.common.out.PageableResult;
 import com.heliozz10.debetter.dto.util.request.in.OrganizerInvitationDto;
 import com.heliozz10.debetter.dto.util.request.out.OrganizerInvitationView;
+import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.mapper.util.request.OrganizerInvitationMapper;
 import com.heliozz10.debetter.service.util.request.OrganizerInvitationService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,8 @@ public class OrganizerInvitationController {
     private final OrganizerInvitationService organizerInvitationService;
     private final OrganizerInvitationMapper organizerInvitationMapper;
 
+    private final UserMapper userMapper;
+
     @GetMapping("/sent")
     public PageableResult<OrganizerInvitationView> getSentOrganizerInvitations(
             Authentication authentication,
@@ -33,7 +36,7 @@ public class OrganizerInvitationController {
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
         Page<OrganizerInvitation> invitations = organizerInvitationService.getInvitationsByInviterId(profile.getId(), pageable);
         return new PageableResult<>(
-                organizerInvitationMapper.toOrganizerInvitationViews(invitations.getContent()),
+                invitations.getContent().stream().map(organizerInvitationService::toOrganizerInvitationView).toList(),
                 invitations.getTotalElements(),
                 invitations.getTotalPages()
         );
@@ -48,7 +51,7 @@ public class OrganizerInvitationController {
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
         Page<OrganizerInvitation> invitations = organizerInvitationService.getInvitationsByInviteeId(profile.getId(), pageable);
         return new PageableResult<>(
-                organizerInvitationMapper.toOrganizerInvitationViews(invitations.getContent()),
+                invitations.getContent().stream().map(organizerInvitationService::toOrganizerInvitationView).toList(),
                 invitations.getTotalElements(),
                 invitations.getTotalPages()
         );

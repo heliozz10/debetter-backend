@@ -7,11 +7,8 @@ import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class OrganizerProfileView extends ProfileView {
-    private Long id;
+public class OrganizerProfileView {
     private List<SimpleTournamentView> organizedTournaments;
     private List<SimpleTournamentView> coOrganizedTournaments;
-    private SimpleUserView user;
 }
