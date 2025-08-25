@@ -3,6 +3,7 @@ package com.heliozz10.debetter.repository.tournament.round;
 import com.heliozz10.debetter.content.tournament.DebateFormat;
 import com.heliozz10.debetter.content.tournament.Tournament;
 import com.heliozz10.debetter.content.tournament.round.Round;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -27,6 +28,9 @@ public interface RoundRepository extends JpaRepository<Round, Long> {
 
     Optional<Round> findByRoundGroup_IdAndRoundNumber(Long id, Integer roundNumber);
 
+    @EntityGraph(value = "Round.withTeamsAndDebaters", type = EntityGraph.EntityGraphType.LOAD)
+    Optional<Round> findWithTeamsAndDebatersByRoundGroup_IdAndRoundNumber(Long id, Integer roundNumber);
+
     @Modifying
     @Query("UPDATE Round r SET r.customFormat = :format WHERE r.id = :roundId")
     void changeRoundFormat(@Param("roundId") Long roundId, @Param("format") DebateFormat format);
@@ -47,5 +51,6 @@ public interface RoundRepository extends JpaRepository<Round, Long> {
 
     List<Round> findByRoundGroup_Tournament_IdAndRoundGroup_Id(Long id, Long id1);
 
+    @EntityGraph(value = "Round.forView", type = EntityGraph.EntityGraphType.LOAD)
     Optional<Round> findByRoundGroup_Tournament_IdAndRoundGroup_IdAndId(Long id, Long id1, Long id2);
 }

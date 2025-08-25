@@ -2,6 +2,7 @@ package com.heliozz10.debetter.dto.tournament.announcement.out;
 
 import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.dto.tag.out.TagView;
+import com.heliozz10.debetter.dto.user.out.SimpleUserView;
 import com.heliozz10.debetter.dto.user.profile.out.OrganizerProfileView;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class AnnouncementView {
     private Url imageUrl;
     private LocalDateTime timestamp;
     private OrganizerProfileView author;
+    private SimpleUserView user;
     private List<CommentView> comments;
     private List<TagView> tags;
 }

@@ -37,7 +37,7 @@ public class Judge {
     private Tournament tournament;
 
     @IndexedEmbedded(includePaths = {"handle"})
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "judge_id")
     private List<SocialProfile> socialProfiles;
 

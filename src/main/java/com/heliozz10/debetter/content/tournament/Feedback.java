@@ -16,6 +16,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Indexed
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "Feedback.forView",
+                attributeNodes = {
+                        @NamedAttributeNode("author")
+                }
+        )
+})
 @Entity
 @Table(name = "feedback")
 public class Feedback {
@@ -46,7 +54,7 @@ public class Feedback {
     private ParticipantProfile author;
 
     @IndexedEmbedded(includePaths = {"name"})
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "feedback_tag",
             joinColumns = @JoinColumn(name = "feedback_id"),

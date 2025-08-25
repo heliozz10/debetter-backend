@@ -7,8 +7,6 @@ import com.heliozz10.debetter.content.tournament.match.Match;
 import com.heliozz10.debetter.dto.tournament.match.in.MatchResultDto;
 import com.heliozz10.debetter.dto.tournament.match.in.ParticipantScoreDto;
 import com.heliozz10.debetter.repository.tournament.match.MatchRepository;
-import com.heliozz10.debetter.repository.tournament.round.RoundGroupRepository;
-import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +19,6 @@ import java.util.*;
 @Service
 public class MatchService {
     private final MatchRepository matchRepository;
-
-    private final RoundGroupRepository roundGroupRepository;
-
-    private final TeamRepository teamRepository;
 
     private final ObjectMapper objectMapper;
 

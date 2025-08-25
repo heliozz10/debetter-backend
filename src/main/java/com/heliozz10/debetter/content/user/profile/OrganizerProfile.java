@@ -12,6 +12,21 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "OrganizerProfile.forView",
+                attributeNodes = {
+                        @NamedAttributeNode("organizedTournaments"),
+                        @NamedAttributeNode("coOrganizedTournaments"),
+                }
+        ),
+        @NamedEntityGraph(
+                name = "OrganizerProfile.withAnnouncements",
+                attributeNodes = {
+                        @NamedAttributeNode("announcements")
+                }
+        )
+})
 @Entity
 @Table(name = "organizer_profile")
 public class OrganizerProfile extends Profile {

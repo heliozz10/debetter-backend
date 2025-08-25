@@ -19,12 +19,9 @@ import java.util.List;
 @Indexed
 @NamedEntityGraphs({
         @NamedEntityGraph(
-                name = "News.withDetails",
+                name = "News.forView",
                 attributeNodes = {
                         @NamedAttributeNode(value = "author", subgraph = "authorSubgraph"),
-                        @NamedAttributeNode("thumbnailUrl"),
-                        @NamedAttributeNode("images"),
-                        @NamedAttributeNode("tags")
                 },
                 subgraphs = {
                         @NamedSubgraph(
@@ -47,11 +44,11 @@ public class News {
     @JoinColumn(name = "author_id")
     private OrganizerProfile author;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "thumbnail_id")
     private Url thumbnailUrl;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "news_id")
     private List<Url> images;
 
@@ -63,7 +60,7 @@ public class News {
     private String content;
 
     @IndexedEmbedded(includePaths = {"name"})
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "news_tag",
             joinColumns = @JoinColumn(name = "news_id"),

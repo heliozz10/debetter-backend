@@ -5,7 +5,9 @@ import com.heliozz10.debetter.content.tournament.Tournament;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.dto.tournament.in.FeedbackDto;
 import com.heliozz10.debetter.dto.tournament.in.FeedbackGetParams;
+import com.heliozz10.debetter.dto.tournament.out.FeedbackView;
 import com.heliozz10.debetter.mapper.tournament.FeedbackMapper;
+import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.repository.specification.tournament.FeedbackSpecification;
 import com.heliozz10.debetter.repository.tournament.FeedbackRepository;
 import jakarta.persistence.EntityManager;
@@ -27,6 +29,8 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final FeedbackMapper feedbackMapper;
+
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public Page<Feedback> getFeedbacks(Long tournamentId, FeedbackGetParams params, Pageable pageable) {
@@ -72,5 +76,11 @@ public class FeedbackService {
                 .orElseThrow(() -> new EntityNotFoundException("Feedback not found"));
 
         feedbackRepository.delete(feedback);
+    }
+
+    public FeedbackView toFeedbackView(Feedback feedback) {
+        FeedbackView view = feedbackMapper.toFeedbackView(feedback);
+        view.setUser(userMapper.toSimpleUserView(feedback.getAuthor().getUser()));
+        return view;
     }
 }

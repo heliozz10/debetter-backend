@@ -54,7 +54,7 @@ public class RoundGroupService {
      */
     @Transactional
     public void proceedToNextRound(Long tournamentId, Long roundGroupId) {
-        RoundGroup roundGroup = roundGroupRepository.findByTournamentIdAndId(tournamentId, roundGroupId)
+        RoundGroup roundGroup = roundGroupRepository.findFullByTournamentIdAndId(tournamentId, roundGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Round group not found"));
 
         Tournament tournament = roundGroup.getTournament();
@@ -63,7 +63,7 @@ public class RoundGroupService {
             throw new IllegalStateException("Tournament is not started");
         }
 
-        Round currentRound = roundRepository.findByRoundGroup_IdAndRoundNumber(roundGroupId, roundGroup.getCurrentRoundNumber())
+        Round currentRound = roundRepository.findWithTeamsAndDebatersByRoundGroup_IdAndRoundNumber(roundGroupId, roundGroup.getCurrentRoundNumber())
                 .orElseThrow(() -> new EntityNotFoundException("Current round not found"));
 
         if(!roundRepository.areAllMatchesCompleted(currentRound)) {

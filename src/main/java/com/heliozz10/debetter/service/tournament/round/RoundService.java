@@ -40,7 +40,7 @@ public class RoundService {
     }
 
     @Transactional(readOnly = true)
-    private Round getRoundByTournamentIdAndRoundGroupIdAndId(Long tournamentId, Long roundGroupId, Long id) {
+    public Round getRoundByTournamentIdAndRoundGroupIdAndId(Long tournamentId, Long roundGroupId, Long id) {
         return roundRepository.findByRoundGroup_Tournament_IdAndRoundGroup_IdAndId(tournamentId, roundGroupId, id)
                 .orElseThrow(() -> new EntityNotFoundException("Round not found"));
     }

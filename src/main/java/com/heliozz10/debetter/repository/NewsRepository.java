@@ -17,11 +17,11 @@ import java.util.Optional;
 
 @Repository
 public interface NewsRepository extends JpaRepository<News, Long>, JpaSpecificationExecutor<News> {
-    @EntityGraph(value = "News.withDetails", type = EntityGraph.EntityGraphType.LOAD)
+    @EntityGraph(value = "News.forView", type = EntityGraph.EntityGraphType.LOAD)
     @Override
     Optional<News> findById(Long aLong);
 
-    @EntityGraph(value = "News.withDetails", type = EntityGraph.EntityGraphType.LOAD)
+    @EntityGraph(value = "News.forView", type = EntityGraph.EntityGraphType.LOAD)
     @Override
     Page<News> findAll(Specification<News> spec, Pageable pageable);
 

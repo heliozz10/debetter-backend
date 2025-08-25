@@ -40,13 +40,11 @@ public class ScheduleService {
 
     @Transactional
     public Schedule addScheduleToTournament(ScheduleFormDto scheduleFormDto, Long tournamentId) {
-        Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
+        Tournament tournament = tournamentRepository.getReferenceById(tournamentId);
 
         Schedule schedule = scheduleMapper.toSchedule(scheduleFormDto);
 
         schedule.setTournament(tournament);
-        tournament.getSchedules().add(schedule);
 
         Url url = fileService.uploadImage(scheduleFormDto.image(), "schedules", UUID.randomUUID().toString());
         schedule.setImageUrl(url);

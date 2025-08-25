@@ -34,7 +34,7 @@ public class FeedbackController {
     ) {
         Page<Feedback> feedbacks = feedbackService.getFeedbacks(tournamentId, params, pageable);
         return new PageableResult<>(
-                feedbackMapper.toFeedbackViews(feedbacks.getContent()),
+                feedbacks.getContent().stream().map(feedbackService::toFeedbackView).toList(),
                 feedbacks.getTotalElements(),
                 feedbacks.getTotalPages()
         );
@@ -43,7 +43,7 @@ public class FeedbackController {
     @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public FeedbackView getFeedbackById(@PathVariable Long tournamentId, @PathVariable Long id) {
-        return feedbackMapper.toFeedbackView(feedbackService.getFeedbackByTournamentIdAndId(tournamentId, id));
+        return feedbackService.toFeedbackView(feedbackService.getFeedbackByTournamentIdAndId(tournamentId, id));
     }
 
     @PreAuthorize("principal.role.name() == 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
@@ -51,7 +51,7 @@ public class FeedbackController {
     public FeedbackView addFeedback(@PathVariable Long tournamentId, @RequestBody FeedbackDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         ParticipantProfile profile = (ParticipantProfile) user.getProfile();
-        return feedbackMapper.toFeedbackView(feedbackService.addFeedbackToTournament(dto, tournamentId, profile.getId()));
+        return feedbackService.toFeedbackView(feedbackService.addFeedbackToTournament(dto, tournamentId, profile.getId()));
     }
 
     @PreAuthorize("principal.role.name() == 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
@@ -59,7 +59,7 @@ public class FeedbackController {
     public FeedbackView updateFeedback(Authentication authentication, @PathVariable Long id, @RequestBody FeedbackDto dto) {
         User user = (User) authentication.getPrincipal();
         ParticipantProfile profile = (ParticipantProfile) user.getProfile();
-        return feedbackMapper.toFeedbackView(feedbackService.updateFeedback(dto, id, profile.getId()));
+        return feedbackService.toFeedbackView(feedbackService.updateFeedback(dto, id, profile.getId()));
     }
 
     @PreAuthorize("principal.role.name() == 'PARTICIPANT'")

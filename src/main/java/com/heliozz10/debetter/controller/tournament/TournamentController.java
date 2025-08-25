@@ -1,6 +1,7 @@
 package com.heliozz10.debetter.controller.tournament;
 
 import com.heliozz10.debetter.content.tournament.DebateFormat;
+import com.heliozz10.debetter.content.tournament.Tournament;
 import com.heliozz10.debetter.content.tournament.round.RoundGroupType;
 import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
@@ -17,6 +18,7 @@ import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.service.tournament.TournamentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,10 +42,11 @@ public class TournamentController {
             @ModelAttribute TournamentGetParams params,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
+        Page<Tournament> tournaments = tournamentService.getTournaments(params, pageable);
         return new PageableResult<>(
-                tournamentMapper.toSimpleTournamentViews(tournamentService.getTournaments(params, pageable).getContent()),
-                tournamentService.getTournaments(params, pageable).getTotalElements(),
-                tournamentService.getTournaments(params, pageable).getTotalPages()
+                tournamentMapper.toSimpleTournamentViews(tournaments.getContent()),
+                tournaments.getTotalElements(),
+                tournaments.getTotalPages()
         );
     }
 

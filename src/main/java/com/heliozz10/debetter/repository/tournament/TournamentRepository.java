@@ -18,6 +18,12 @@ import java.util.Optional;
 
 @Repository
 public interface TournamentRepository extends JpaRepository<Tournament, Long>, JpaSpecificationExecutor<Tournament> {
+    @EntityGraph(value = "Tournament.withOrganizers", type = EntityGraph.EntityGraphType.LOAD)
+    Optional<Tournament> findWithOrganizersById(Long id);
+
+    @EntityGraph(value = "Tournament.withTeams", type = EntityGraph.EntityGraphType.LOAD)
+    Optional<Tournament> findWithTeamsById(Long id);
+
     List<Tournament> findByStartDateBetween(LocalDateTime start, LocalDateTime end);
     List<Tournament> findByEndDateBetween(LocalDateTime start, LocalDateTime end);
     List<Tournament> findByRegistrationDeadlineBetween(LocalDateTime start, LocalDateTime end);

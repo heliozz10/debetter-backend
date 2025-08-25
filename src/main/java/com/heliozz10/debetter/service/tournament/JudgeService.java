@@ -44,13 +44,11 @@ public class JudgeService {
 
     @Transactional
     public Judge addJudgeToTournament(JudgeFormDto judgeFormDto, Long tournamentId) {
-        Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
+        Tournament tournament = tournamentRepository.getReferenceById(tournamentId);
 
         Judge judge = judgeMapper.toJudge(judgeFormDto);
 
         judge.setTournament(tournament);
-        tournament.getJudges().add(judge);
         judge.setTimesJudged(0);
 
         return judgeRepository.save(judge);

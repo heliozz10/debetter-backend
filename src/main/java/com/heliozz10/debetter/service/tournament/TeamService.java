@@ -5,6 +5,8 @@ import com.heliozz10.debetter.content.tournament.team.Club;
 import com.heliozz10.debetter.content.tournament.team.Team;
 import com.heliozz10.debetter.dto.tournament.team.in.TeamUpdateOrganizerDto;
 import com.heliozz10.debetter.dto.tournament.team.in.TeamUpdateParticipantDto;
+import com.heliozz10.debetter.dto.tournament.team.out.TeamView;
+import com.heliozz10.debetter.mapper.tournament.TeamMapper;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.service.CommonService;
 import jakarta.persistence.EntityManager;
@@ -28,8 +30,11 @@ public class TeamService {
     private final EntityManager entityManager;
 
     private final TeamRepository teamRepository;
+    private final TeamMapper teamMapper;
 
     private final CommonService commonService;
+
+    private final TournamentParticipantService tournamentParticipantService;
 
     @Transactional(readOnly = true)
     public Page<Team> getTeamsByTournamentId(Long tournamentId, Pageable pageable) {
@@ -56,8 +61,8 @@ public class TeamService {
     }
 
     @Transactional(readOnly = true)
-    public Team getTeamByTournamentIdAndId(Long teamId) {
-        return teamRepository.findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team not found"));
+    public Team getTeamByTournamentIdAndId(Long tournamentId, Long teamId) {
+        return teamRepository.findByTournamentIdAndId(tournamentId, teamId).orElseThrow(() -> new EntityNotFoundException("Team not found"));
     }
 
     @Transactional
@@ -78,6 +83,12 @@ public class TeamService {
                 teamUpdateParticipantDto.club() != null ? commonService.findOrCreateEntity(teamUpdateParticipantDto.club(), Club.class, entityManager) : team.getClub(),
                 teamId
         );
+    }
+
+    public TeamView toTeamView(Team team) {
+        TeamView view = teamMapper.toTeamView(team);
+        view.setMembers(team.getMembers().stream().map(tournamentParticipantService::toSimpleTournamentParticipantView).toList());
+        return view;
     }
 
     /**

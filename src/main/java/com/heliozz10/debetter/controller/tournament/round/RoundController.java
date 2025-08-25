@@ -2,6 +2,7 @@ package com.heliozz10.debetter.controller.tournament.round;
 
 import com.heliozz10.debetter.dto.tournament.round.in.RoundUpdateDto;
 import com.heliozz10.debetter.dto.tournament.round.out.RoundView;
+import com.heliozz10.debetter.dto.tournament.round.out.SimpleRoundView;
 import com.heliozz10.debetter.mapper.tournament.round.RoundMapper;
 import com.heliozz10.debetter.service.tournament.round.RoundService;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +20,25 @@ public class RoundController {
 
     @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
-    public List<RoundView> getRoundsByRoundGroupId(@PathVariable Long tournamentId, @PathVariable Long roundGroupId) {
-        return roundMapper.toRoundViews(roundService.getRoundsByTournamentIdAndRoundGroupId(tournamentId, roundGroupId));
+    public List<SimpleRoundView> getRoundsByRoundGroupId(@PathVariable Long tournamentId, @PathVariable Long roundGroupId) {
+        return roundMapper.toSimpleRoundViews(roundService.getRoundsByTournamentIdAndRoundGroupId(tournamentId, roundGroupId));
+    }
+
+    @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
+    @GetMapping("/{id}")
+    public RoundView getRoundById(@PathVariable Long tournamentId, @PathVariable Long roundGroupId, @PathVariable Long id) {
+        return roundMapper.toRoundView(roundService.getRoundByTournamentIdAndRoundGroupIdAndId(tournamentId, roundGroupId, id));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
-    @PatchMapping("/{roundId}")
-    public void updateRound(@PathVariable Long tournamentId, @PathVariable Long roundId, @RequestBody RoundUpdateDto roundUpdateDto) {
-        roundService.updateRound(roundUpdateDto, tournamentId, roundId);
+    @PatchMapping("/{id}")
+    public void updateRound(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody RoundUpdateDto roundUpdateDto) {
+        roundService.updateRound(roundUpdateDto, tournamentId, id);
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
-    @DeleteMapping("/{roundId}")
-    public void deleteRound(@PathVariable Long tournamentId, @PathVariable Long roundId) {
-        roundService.deleteRound(tournamentId, roundId);
+    @DeleteMapping("/{id}")
+    public void deleteRound(@PathVariable Long tournamentId, @PathVariable Long id) {
+        roundService.deleteRound(tournamentId, id);
     }
 }

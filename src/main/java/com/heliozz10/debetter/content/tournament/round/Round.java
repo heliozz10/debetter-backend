@@ -14,20 +14,21 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@NamedEntityGraph(
-    name = "Round.withTournament",
-    attributeNodes = {
-        @NamedAttributeNode(value = "roundGroup", subgraph = "roundGroupWithTournament")
-    },
-    subgraphs = {
-        @NamedSubgraph(
-            name = "roundGroupWithTournament",
-            attributeNodes = {
-                @NamedAttributeNode(value = "tournament")
-            }
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "Round.forView",
+                attributeNodes = {
+                        @NamedAttributeNode("matches")
+                }
+        ),
+        @NamedEntityGraph(
+                name = "Round.withTeamsAndDebaters",
+                attributeNodes = {
+                        @NamedAttributeNode("teams"),
+                        @NamedAttributeNode("debaters")
+                }
         )
-    }
-)
+})
 @Entity
 @Table(name = "round", indexes = {
         @Index(name = "round_round_group_id_fkey", columnList = "round_group_id")

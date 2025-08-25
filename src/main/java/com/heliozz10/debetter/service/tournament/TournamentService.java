@@ -16,16 +16,14 @@ import com.heliozz10.debetter.content.user.role.TournamentRole;
 import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.content.util.request.OrganizerInvitation;
 import com.heliozz10.debetter.dto.tournament.in.OrganizerSelectorDto;
+import com.heliozz10.debetter.dto.tournament.in.TournamentFormDto;
 import com.heliozz10.debetter.dto.tournament.in.TournamentGetParams;
 import com.heliozz10.debetter.dto.tournament.team.in.ParticipantSelectorDto;
 import com.heliozz10.debetter.dto.tournament.team.in.TeamFormDto;
-import com.heliozz10.debetter.dto.tournament.in.TournamentFormDto;
-import com.heliozz10.debetter.dto.user.out.SimpleUserView;
-import com.heliozz10.debetter.dto.user.out.UserView;
-import com.heliozz10.debetter.mapper.tournament.announcement.AnnouncementMapper;
 import com.heliozz10.debetter.mapper.tournament.JudgeMapper;
 import com.heliozz10.debetter.mapper.tournament.TeamMapper;
 import com.heliozz10.debetter.mapper.tournament.TournamentMapper;
+import com.heliozz10.debetter.mapper.tournament.announcement.AnnouncementMapper;
 import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.projection.TournamentCheckResult;
 import com.heliozz10.debetter.repository.specification.tournament.TournamentSpecification;
@@ -33,12 +31,9 @@ import com.heliozz10.debetter.repository.tournament.JudgeRepository;
 import com.heliozz10.debetter.repository.tournament.TournamentParticipantRepository;
 import com.heliozz10.debetter.repository.tournament.TournamentRepository;
 import com.heliozz10.debetter.repository.tournament.announcement.AnnouncementRepository;
-import com.heliozz10.debetter.repository.tournament.round.RoundGroupRepository;
-import com.heliozz10.debetter.repository.tournament.round.RoundRepository;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.repository.user.UserRepository;
 import com.heliozz10.debetter.repository.user.profile.OrganizerProfileRepository;
-import com.heliozz10.debetter.repository.user.profile.ParticipantProfileRepository;
 import com.heliozz10.debetter.security.tournament.TournamentSecurity;
 import com.heliozz10.debetter.service.CommonService;
 import com.heliozz10.debetter.service.tournament.round.RoundService;
@@ -52,6 +47,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,16 +85,11 @@ public class TournamentService {
 
     private final OrganizerProfileRepository organizerProfileRepository;
 
-    private final ParticipantProfileRepository participantProfileRepository;
-
     private final OrganizerInvitationService organizerInvitationService;
 
     private final ParticipantInvitationService participantInvitationService;
 
-    private final RoundGroupRepository roundGroupRepository;
-
     private final RoundService roundService;
-    private final RoundRepository roundRepository;
 
     private final MatchService matchService;
 
@@ -138,7 +129,7 @@ public class TournamentService {
             throw new IllegalArgumentException("The team limit must be at least 2^eliminationRoundCount. " + dto.eliminationRoundCount() + " elimination rounds are not possible with a team limit of " + dto.teamLimit());
         }
 
-        OrganizerProfile organizer = organizerProfileRepository.findById(organizerId)
+        OrganizerProfile organizer = organizerProfileRepository.findWithUserById(organizerId)
                 .orElseThrow(() -> new EntityNotFoundException("Organizer not found"));
         Tournament tournament = tournamentMapper.toTournament(dto);
         tournament.setMainOrganizer(organizer);
@@ -185,6 +176,7 @@ public class TournamentService {
     public Tournament updateTournament(TournamentFormDto dto, Long tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
                 .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
+
         if(tournament.getStarted()) {
             throw new IllegalStateException("Tournament has already started");
         }
@@ -228,7 +220,7 @@ public class TournamentService {
         if(organizerSelectorDto.id() != null) {
             profile = entityManager.getReference(OrganizerProfile.class, organizerSelectorDto.id());
         } else if(organizerSelectorDto.username() != null) {
-            profile = userService.loadUserByUsername(organizerSelectorDto.username()).getProfile();
+            profile = userRepository.findByUsername(organizerSelectorDto.username()).orElseThrow(() -> new UsernameNotFoundException("User not found")).getProfile();
         } else {
             throw new IllegalArgumentException("Invalid organizer selector");
         }
@@ -242,10 +234,10 @@ public class TournamentService {
 
     @Transactional
     public void addOrganizerToTournament(Long organizerId, Long tournamentId) {
-        Tournament tournament = tournamentRepository.findById(tournamentId)
+        Tournament tournament = tournamentRepository.findWithOrganizersById(tournamentId)
                 .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
 
-        OrganizerProfile organizer = organizerProfileRepository.findById(organizerId)
+        OrganizerProfile organizer = organizerProfileRepository.findWithUserById(organizerId)
                 .orElseThrow(() -> new EntityNotFoundException("Organizer not found"));
 
         tournament.getOrganizers().add(organizer);
@@ -256,12 +248,12 @@ public class TournamentService {
 
     @Transactional
     public void removeOrganizerFromTournament(Long tournamentId, Long organizerId) {
-        Tournament tournament = tournamentRepository.findById(tournamentId)
+        Tournament tournament = tournamentRepository.findWithOrganizersById(tournamentId)
                 .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
 
         tournament.getOrganizers().removeIf(o -> Objects.equals(o.getId(), organizerId));
 
-        OrganizerProfile organizer = organizerProfileRepository.findById(organizerId)
+        OrganizerProfile organizer = organizerProfileRepository.findWithUserById(organizerId)
                 .orElseThrow(() -> new EntityNotFoundException("Organizer not found"));
 
         organizer.getCoOrganizedTournaments().removeIf(t -> Objects.equals(t.getId(), tournamentId));
@@ -272,7 +264,7 @@ public class TournamentService {
     //TEAMS
     @Transactional
     public void registerTeamToTournament(TeamFormDto teamFormDto, Long tournamentId) {
-        Tournament tournament = tournamentRepository.findById(tournamentId)
+        Tournament tournament = tournamentRepository.findWithTeamsById(tournamentId)
                 .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
 
         if(LocalDateTime.now().isAfter(tournament.getRegistrationDeadline())) {
@@ -284,7 +276,6 @@ public class TournamentService {
         Team team = teamMapper.toTeam(teamFormDto);
         team.setClub(commonService.findOrCreateEntity(teamFormDto.club(), Club.class, entityManager));
         team.setTournament(tournament);
-        tournament.getTeams().add(team);
 
         registerTeamCreator(teamFormDto, tournament, team);
 
@@ -344,7 +335,7 @@ public class TournamentService {
             }
             profile = entityManager.getReference(ParticipantProfile.class, selector.id());
         } else if (selector.username() != null) {
-            profile = userService.loadUserByUsername(selector.username()).getProfile();
+            profile = userRepository.findByUsername(selector.username()).orElseThrow(() -> new UsernameNotFoundException("User not found")).getProfile();
         } else {
             throw new IllegalArgumentException("Invalid participant selector");
         }
@@ -362,7 +353,7 @@ public class TournamentService {
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
         team.getMembers().stream().map(TournamentParticipant::getParticipantProfile).forEach(profile -> {
-            tournamentSecurity.removeRoleFromUser(profile.getId(), tournamentId, TournamentRole.VIEW);
+            tournamentSecurity.removeRoleFromUser(profile.getUser().getId(), tournamentId, TournamentRole.VIEW);
         });
 
         teamRepository.deleteById(teamId);

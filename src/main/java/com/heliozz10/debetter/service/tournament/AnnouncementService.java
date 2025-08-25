@@ -8,7 +8,9 @@ import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.dto.tournament.announcement.in.AnnouncementFormDto;
 import com.heliozz10.debetter.dto.tournament.announcement.in.CommentDto;
+import com.heliozz10.debetter.dto.tournament.announcement.out.AnnouncementView;
 import com.heliozz10.debetter.mapper.tournament.announcement.AnnouncementMapper;
+import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.repository.tournament.TournamentRepository;
 import com.heliozz10.debetter.repository.tournament.announcement.AnnouncementRepository;
 import com.heliozz10.debetter.repository.tournament.announcement.CommentRepository;
@@ -38,6 +40,8 @@ public class AnnouncementService {
 
     private final CommentRepository commentRepository;
 
+    private final UserMapper userMapper;
+
     @Transactional(readOnly = true)
     public Page<Announcement> getAnnouncementsByTournamentId(Long tournamentId, Pageable pageable) {
         return announcementRepository.findByTournamentId(tournamentId, pageable);
@@ -56,17 +60,13 @@ public class AnnouncementService {
 
     @Transactional
     public Announcement addAnnouncementToTournament(AnnouncementFormDto announcementFormDto, Long tournamentId, Long creatorId) {
-        Tournament tournament = tournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
+        Tournament tournament = tournamentRepository.getReferenceById(tournamentId);
 
         Announcement announcement = announcementMapper.toAnnouncement(announcementFormDto);
 
-        OrganizerProfile author = organizerProfileRepository.findById(creatorId)
-                .orElseThrow(() -> new EntityNotFoundException("Organizer not found"));
+        OrganizerProfile author = organizerProfileRepository.getReferenceById(creatorId);
 
         announcement.setTournament(tournament);
-        tournament.getAnnouncements().add(announcement);
-        author.getAnnouncements().add(announcement);
         announcement.setAuthor(author);
         announcement.setTimestamp(LocalDateTime.now());
         announcement.setHidden(false);
@@ -156,5 +156,11 @@ public class AnnouncementService {
                 .orElseThrow(() -> new EntityNotFoundException("Announcement not found"));
 
         announcementRepository.deleteById(announcementId);
+    }
+
+    public AnnouncementView toAnnouncementView(Announcement announcement) {
+        AnnouncementView view = announcementMapper.toAnnouncementView(announcement);
+        view.setUser(userMapper.toSimpleUserView(announcement.getAuthor().getUser()));
+        return view;
     }
 }

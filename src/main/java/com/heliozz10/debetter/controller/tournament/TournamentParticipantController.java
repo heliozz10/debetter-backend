@@ -30,7 +30,7 @@ public class TournamentParticipantController {
     ) {
         Page<TournamentParticipant> participants = tournamentParticipantService.getParticipants(tournamentId, params, pageable);
         return new PageableResult<>(
-                tournamentParticipantMapper.toSimpleTournamentParticipantViews(participants.getContent()),
+                participants.getContent().stream().map(tournamentParticipantService::toSimpleTournamentParticipantView).toList(),
                 participants.getTotalElements(),
                 participants.getTotalPages()
         );
@@ -39,6 +39,6 @@ public class TournamentParticipantController {
     @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{participantId}")
     public TournamentParticipantView getTournamentParticipant(@PathVariable Long tournamentId, @PathVariable Long participantId) {
-        return tournamentParticipantMapper.toTournamentParticipantView(tournamentParticipantService.getParticipantByTournamentIdAndId(tournamentId, participantId));
+        return tournamentParticipantService.toTournamentParticipantView(tournamentParticipantService.getParticipantByTournamentIdAndId(tournamentId, participantId));
     }
 }

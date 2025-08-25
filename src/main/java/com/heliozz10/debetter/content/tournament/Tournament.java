@@ -23,6 +23,20 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Indexed
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "Tournament.withOrganizers",
+                attributeNodes = {
+                        @NamedAttributeNode("organizers")
+                }
+        ),
+        @NamedEntityGraph(
+                name = "Tournament.withTeams",
+                attributeNodes = {
+                        @NamedAttributeNode("teams")
+                }
+        )
+})
 @Entity
 @Table(name = "tournament")
 public class Tournament {
@@ -37,7 +51,7 @@ public class Tournament {
     @Column
     private String description;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "image_id")
     private Url imageUrl;
 
@@ -90,7 +104,7 @@ public class Tournament {
     @Column(nullable = false)
     private DebateFormat teamEliminationFormat;
 
-    @OneToMany(mappedBy = "tournament", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "tournament", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserTournamentRole> tournamentRoles = new HashSet<>();
 
     @OneToMany(mappedBy = "tournament", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -100,7 +114,7 @@ public class Tournament {
     private List<Schedule> schedules;
 
     @IndexedEmbedded(includePaths = {"name"})
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "tournament_tag",
             joinColumns = @JoinColumn(name = "tournament_id"),

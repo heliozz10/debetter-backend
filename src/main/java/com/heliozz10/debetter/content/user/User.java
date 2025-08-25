@@ -23,6 +23,21 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @AllArgsConstructor
 @Indexed
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "User.forView",
+                attributeNodes = {
+                        @NamedAttributeNode("socialProfiles")
+                }
+        ),
+        @NamedEntityGraph(
+                name = "User.forSecurity",
+                attributeNodes = {
+                        @NamedAttributeNode("authorities"),
+                        @NamedAttributeNode("tournamentRoles")
+                }
+        )
+})
 @Entity
 @Table(name = "_user")
 public class User implements UserDetails {
@@ -49,7 +64,7 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "image_id")
     private Url imageUrl;
 
@@ -61,7 +76,7 @@ public class User implements UserDetails {
     )
     private List<Authority> authorities;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserTournamentRole> tournamentRoles;
 
     @Enumerated(EnumType.STRING)

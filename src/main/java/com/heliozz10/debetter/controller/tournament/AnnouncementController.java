@@ -41,7 +41,7 @@ public class AnnouncementController {
                 announcementService.getAnnouncementsByTournamentId(tournamentId, pageable) :
                 announcementService.getAnnouncementsByTournamentIdAndAuthorId(tournamentId, authorId, pageable);
         return new PageableResult<>(
-                announcementMapper.toAnnouncementViews(announcements.getContent()),
+                announcements.getContent().stream().map(announcementService::toAnnouncementView).toList(),
                 announcements.getTotalElements(),
                 announcements.getTotalPages()
         );
@@ -50,7 +50,7 @@ public class AnnouncementController {
     @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public AnnouncementView getAnnouncementById(@PathVariable Long tournamentId, @PathVariable Long id) {
-        return announcementMapper.toAnnouncementView(announcementService.getAnnouncementByTournamentIdAndId(tournamentId, id));
+        return announcementService.toAnnouncementView(announcementService.getAnnouncementByTournamentIdAndId(tournamentId, id));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
@@ -58,7 +58,7 @@ public class AnnouncementController {
     public AnnouncementView addAnnouncement(@PathVariable Long tournamentId, @RequestBody AnnouncementFormDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
-        return announcementMapper.toAnnouncementView(announcementService.addAnnouncementToTournament(dto, tournamentId, profile.getId()));
+        return announcementService.toAnnouncementView(announcementService.addAnnouncementToTournament(dto, tournamentId, profile.getId()));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
@@ -66,7 +66,7 @@ public class AnnouncementController {
     public AnnouncementView updateAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody AnnouncementFormDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
-        return announcementMapper.toAnnouncementView(announcementService.updateAnnouncement(dto, tournamentId, id, profile.getId()));
+        return announcementService.toAnnouncementView(announcementService.updateAnnouncement(dto, tournamentId, id, profile.getId()));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")

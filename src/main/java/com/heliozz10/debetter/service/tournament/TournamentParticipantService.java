@@ -2,6 +2,10 @@ package com.heliozz10.debetter.service.tournament;
 
 import com.heliozz10.debetter.content.tournament.TournamentParticipant;
 import com.heliozz10.debetter.dto.tournament.in.TournamentParticipantGetParams;
+import com.heliozz10.debetter.dto.tournament.out.SimpleTournamentParticipantView;
+import com.heliozz10.debetter.dto.tournament.out.TournamentParticipantView;
+import com.heliozz10.debetter.mapper.tournament.TournamentParticipantMapper;
+import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.repository.specification.tournament.TournamentParticipantSpecification;
 import com.heliozz10.debetter.repository.tournament.TournamentParticipantRepository;
 import jakarta.persistence.EntityManager;
@@ -19,6 +23,9 @@ public class TournamentParticipantService {
     private final EntityManager entityManager;
 
     private final TournamentParticipantRepository tournamentParticipantRepository;
+    private final TournamentParticipantMapper tournamentParticipantMapper;
+
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public Page<TournamentParticipant> getParticipants(Long tournamentId, TournamentParticipantGetParams params, Pageable pageable) {
@@ -31,5 +38,17 @@ public class TournamentParticipantService {
     public TournamentParticipant getParticipantByTournamentIdAndId(Long tournamentId, Long id) {
         return tournamentParticipantRepository.findByTournamentIdAndId(tournamentId, id)
                 .orElseThrow(() -> new EntityNotFoundException("Participant not found"));
+    }
+
+    public SimpleTournamentParticipantView toSimpleTournamentParticipantView(TournamentParticipant tournamentParticipant) {
+        SimpleTournamentParticipantView view = tournamentParticipantMapper.toSimpleTournamentParticipantView(tournamentParticipant);
+        view.setUser(userMapper.toSimpleUserView(tournamentParticipant.getParticipantProfile().getUser()));
+        return view;
+    }
+
+    public TournamentParticipantView toTournamentParticipantView(TournamentParticipant tournamentParticipant) {
+        TournamentParticipantView view = tournamentParticipantMapper.toTournamentParticipantView(tournamentParticipant);
+        view.setUser(userMapper.toSimpleUserView(tournamentParticipant.getParticipantProfile().getUser()));
+        return view;
     }
 }

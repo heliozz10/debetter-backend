@@ -45,7 +45,7 @@ public class TeamController {
     @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping("/{id}")
     public TeamView getTeamByTournamentIdAndId(@PathVariable Long tournamentId, @PathVariable Long id) {
-        return teamMapper.toTeamView(teamService.getTeamByTournamentIdAndId(id));
+        return teamService.toTeamView(teamService.getTeamByTournamentIdAndId(tournamentId, id));
     }
 
     @PreAuthorize("principal.role.name() == 'PARTICIPANT'")

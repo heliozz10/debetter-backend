@@ -5,6 +5,7 @@ import com.heliozz10.debetter.content.tournament.team.Club;
 import com.heliozz10.debetter.content.tournament.team.Team;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,9 @@ import java.util.Optional;
 
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
+    @EntityGraph(value = "Team.full", type = EntityGraph.EntityGraphType.LOAD)
+    Optional<Team> findFullById(Long id);
+
     Page<Team> findByTournamentId(Long tournamentId, Pageable pageable);
 
     List<Team> findByTournamentAndDisqualifiedFalse(Tournament tournament);
@@ -59,5 +63,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query("update Team t set t.name = ?1, t.club = ?2 where t.id = ?3")
     int updateNameAndClubById(String name, Club club, Long id);
 
+    @EntityGraph(value = "Team.full", type = EntityGraph.EntityGraphType.LOAD)
     Optional<Team> findByTournamentIdAndId(Long tournamentId, Long id);
 }

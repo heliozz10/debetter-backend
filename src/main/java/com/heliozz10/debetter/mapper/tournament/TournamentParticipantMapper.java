@@ -16,8 +16,6 @@ import java.util.List;
 public interface TournamentParticipantMapper {
     SimpleTournamentParticipantView toSimpleTournamentParticipantView(TournamentParticipant tournament);
 
-    List<SimpleTournamentParticipantView> toSimpleTournamentParticipantViews(List<TournamentParticipant> participants);
-
     @InheritConfiguration(name = "toSimpleTournamentParticipantView")
     TournamentParticipantView toTournamentParticipantView(TournamentParticipant tournament);
 }

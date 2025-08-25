@@ -84,7 +84,7 @@ public class ParticipantInvitationService {
             throw new IllegalArgumentException("Invitation already exists");
         }
 
-        Team team = teamRepository.findById(teamId)
+        Team team = teamRepository.findFullById(teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
         teamService.validateTeamSize(team);
@@ -102,7 +102,7 @@ public class ParticipantInvitationService {
      */
     @Transactional
     public List<ParticipantInvitation> createInvitations(Long inviterId, Collection<Long> inviteeIds, Long teamId) {
-        Team team = teamRepository.findById(teamId)
+        Team team = teamRepository.findFullById(teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
         teamService.validateTeamSize(team);
@@ -148,7 +148,7 @@ public class ParticipantInvitationService {
 
     @Transactional
     public void deleteInvitation(Long invitationId, Long inviteeId) {
-        ParticipantInvitation invitation = participantInvitationRepository.findByInviteeIdAndId(inviteeId, invitationId)
+        ParticipantInvitation invitation = participantInvitationRepository.findRawByInviteeIdAndId(inviteeId, invitationId)
                 .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
 
         participantInvitationRepository.deleteById(invitationId);

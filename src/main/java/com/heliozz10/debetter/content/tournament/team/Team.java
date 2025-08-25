@@ -17,6 +17,29 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "Team.full",
+                attributeNodes = {
+                        @NamedAttributeNode("tournament"),
+                        @NamedAttributeNode(value = "members", subgraph = "membersSubgraph")
+                },
+                subgraphs = {
+                        @NamedSubgraph(
+                                name = "membersSubgraph",
+                                attributeNodes = {
+                                        @NamedAttributeNode(value = "participantProfile", subgraph = "profileSubgraph")
+                                }
+                        ),
+                        @NamedSubgraph(
+                                name = "profileSubgraph",
+                                attributeNodes = {
+                                        @NamedAttributeNode("user")
+                                }
+                        )
+                }
+        )
+})
 @Entity
 @Table(name = "team")
 public class Team {
@@ -31,7 +54,7 @@ public class Team {
     @JoinColumn(name = "tournament_id", nullable = false)
     private Tournament tournament;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "club_id")
     private Club club;
 

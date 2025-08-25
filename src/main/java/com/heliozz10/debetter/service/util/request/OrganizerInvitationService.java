@@ -86,7 +86,7 @@ public class OrganizerInvitationService {
 
     @Transactional
     public void deleteInvitation(Long invitationId, Long inviteeId) {
-        OrganizerInvitation invitation = organizerInvitationRepository.findByInviteeIdAndId(inviteeId, invitationId)
+        OrganizerInvitation invitation = organizerInvitationRepository.findRawByInviteeIdAndId(inviteeId, invitationId)
                 .orElseThrow(() -> new EntityNotFoundException("Invitation not found"));
 
         organizerInvitationRepository.deleteById(invitationId);

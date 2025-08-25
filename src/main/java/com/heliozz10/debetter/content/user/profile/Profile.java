@@ -8,6 +8,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "Profile.withUser",
+                attributeNodes = {
+                        @NamedAttributeNode("user")
+                }
+        )
+})
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Profile {

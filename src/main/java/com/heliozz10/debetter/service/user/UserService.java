@@ -169,6 +169,6 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return userRepository.findForSecurityByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 }
