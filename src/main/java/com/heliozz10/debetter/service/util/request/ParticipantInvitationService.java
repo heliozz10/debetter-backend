@@ -11,6 +11,7 @@ import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.mapper.util.request.ParticipantInvitationMapper;
 import com.heliozz10.debetter.repository.tournament.TournamentParticipantRepository;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
+import com.heliozz10.debetter.repository.user.profile.ParticipantProfileRepository;
 import com.heliozz10.debetter.repository.util.request.ParticipantInvitationRepository;
 import com.heliozz10.debetter.security.tournament.TournamentSecurity;
 import com.heliozz10.debetter.service.tournament.TeamService;
@@ -43,6 +44,7 @@ public class ParticipantInvitationService {
     private final TournamentSecurity tournamentSecurity;
 
     private final UserMapper userMapper;
+    private final ParticipantProfileRepository participantProfileRepository;
 
     @Transactional(readOnly = true)
     public Page<ParticipantInvitation> getInvitationsByInviteeId(Long inviteeId, Pageable pageable) {
@@ -62,9 +64,10 @@ public class ParticipantInvitationService {
     /**
      * Creates a participant invitation entity (not persisted).
      */
-    private ParticipantInvitation buildInvitation(Long inviterId, Long inviteeId, Team team) {
+    private ParticipantInvitation buildInvitation(Long inviterId, String inviteeUsername, Team team) {
         ParticipantProfile inviter = entityManager.getReference(ParticipantProfile.class, inviterId);
-        ParticipantProfile invitee = entityManager.getReference(ParticipantProfile.class, inviteeId);
+        ParticipantProfile invitee = participantProfileRepository.findByUser_Username(inviteeUsername)
+                .orElseThrow(() -> new EntityNotFoundException("Invitee not found"));
 
         ParticipantInvitation invitation = new ParticipantInvitation();
         invitation.setInviter(inviter);
@@ -77,8 +80,8 @@ public class ParticipantInvitationService {
     }
 
     @Transactional
-    public ParticipantInvitation createInvitation(Long inviterId, Long inviteeId, Long teamId) {
-        long existingInvitationCount = participantInvitationRepository.countExistingInvitation(inviterId, inviteeId, teamId);
+    public ParticipantInvitation createInvitation(Long inviterId, String inviteeUsername, Long teamId) {
+        long existingInvitationCount = participantInvitationRepository.countExistingInvitations(inviterId, inviteeUsername, teamId);
 
         if (existingInvitationCount > 0) {
             throw new IllegalArgumentException("Invitation already exists");
@@ -87,9 +90,13 @@ public class ParticipantInvitationService {
         Team team = teamRepository.findFullById(teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
+        if(!team.getMembers().stream().anyMatch(member -> member.getId().equals(inviterId))) {
+            throw new IllegalArgumentException("Inviter is not a member of the team");
+        }
+
         teamService.validateTeamSize(team);
 
-        ParticipantInvitation invitation = buildInvitation(inviterId, inviteeId, team);
+        ParticipantInvitation invitation = buildInvitation(inviterId, inviteeUsername, team);
         return participantInvitationRepository.save(invitation);
     }
 
@@ -101,14 +108,14 @@ public class ParticipantInvitationService {
      * @return
      */
     @Transactional
-    public List<ParticipantInvitation> createInvitations(Long inviterId, Collection<Long> inviteeIds, Long teamId) {
+    public List<ParticipantInvitation> createInvitations(Long inviterId, Collection<String> inviteeUsernames, Long teamId) {
         Team team = teamRepository.findFullById(teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
         teamService.validateTeamSize(team);
 
-        List<ParticipantInvitation> invitations = inviteeIds.stream()
-                .map(inviteeId -> buildInvitation(inviterId, inviteeId, team))
+        List<ParticipantInvitation> invitations = inviteeUsernames.stream()
+                .map(inviteeUsername -> buildInvitation(inviterId, inviteeUsername, team))
                 .toList();
 
         return participantInvitationRepository.saveAll(invitations);

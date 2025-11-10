@@ -12,6 +12,6 @@ public record TeamFormDto(
         @NotNull @Size(min = 1, max = 50) String name,
         @NotNull @Size(min = 1, max = 50) String club,
         @NotNull @Positive Long creatorId,
-        @Valid List<ParticipantSelectorDto> invitedParticipants
+        @Valid List<String> invitedParticipants
 ) {
 }

@@ -1,5 +1,7 @@
 package com.heliozz10.debetter.content.user.role;
 
-public enum TournamentRole {
+import java.io.Serializable;
+
+public enum TournamentRole implements Serializable {
     VIEW, EDIT, FULL
 }

@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
@@ -22,10 +24,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authenticationProvider(authProvider)
-                .formLogin(form -> form
-                        .loginProcessingUrl("/auth/login")
-                        .loginPage("/auth/login")
-                )
+                .authorizeHttpRequests(httpRequests -> httpRequests
+                        .requestMatchers("/auth/**", "/tournaments", "/news/**", "/cities", "/institutions").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .anyRequest().authenticated())
+                .formLogin(AbstractHttpConfigurer::disable)
                 .rememberMe(rememberMe -> rememberMe
                         .userDetailsService(userService)
                         .key(environment.getProperty("security.remember-me.key"))
@@ -33,8 +36,10 @@ public class SecurityConfig {
                         .tokenValiditySeconds(60 * 60 * 24 * 30))
                 .userDetailsService(userService)
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new CustomCsrfTokenRequestHandler()))
+//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                        .csrfTokenRequestHandler(new CustomCsrfTokenRequestHandler())
+                        .disable())
+                .cors(cors -> {})
                 .build();
     }
 }

@@ -1,13 +1,45 @@
 services:
-  redis-debetter:
-    image: redis:8.0.3
-    container_name: redis-debetter
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/debetter
+      SPRING_DATASOURCE_USERNAME: debetter_user
+      SPRING_DATASOURCE_PASSWORD: debetter_password
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: 893fe9af-60e2-4ab4-952d-4a767f6670c0
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:16.3-alpine3.20
+    container_name: debetter-postgres
+    environment:
+      POSTGRES_DB: debetter
+      POSTGRES_USER: debetter_user
+      POSTGRES_PASSWORD: debetter_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.0.3-alpine
+    container_name: debetter-redis
     command: [redis-server, "--requirepass", "893fe9af-60e2-4ab4-952d-4a767f6670c0"]
     ports:
-      - "6380:6379"
+      - "6381:6379"
     volumes:
       - redis-data:/data
     restart: unless-stopped
 
 volumes:
+  db-data:
   redis-data:

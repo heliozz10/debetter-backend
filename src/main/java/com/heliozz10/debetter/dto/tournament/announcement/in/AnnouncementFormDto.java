@@ -7,7 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public record AnnouncementFormDto(
         @NotNull(groups = {OnCreate.class}) @Size(min = 1, max = 50) String title,
-        @NotNull(groups = {OnCreate.class}) @Size(min = 1, max = 200) String content,
-        MultipartFile image
+        @NotNull(groups = {OnCreate.class}) @Size(min = 1, max = 200) String content
 ) {
 }

@@ -8,7 +8,6 @@ import com.heliozz10.debetter.content.user.profile.institution.Institution;
 import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.content.util.socials.SocialPlatform;
 import com.heliozz10.debetter.content.util.socials.SocialProfile;
-import com.heliozz10.debetter.dto.user.in.ProfilePictureDto;
 import com.heliozz10.debetter.dto.user.in.UserGetParams;
 import com.heliozz10.debetter.dto.user.in.UserRegistrationDto;
 import com.heliozz10.debetter.dto.user.in.UserUpdateDto;
@@ -25,10 +24,11 @@ import com.heliozz10.debetter.service.util.media.FileService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -68,6 +68,7 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll(spec, pageable);
     }
 
+    @Cacheable(value = "userById", key = "#userId")
     @Transactional(readOnly = true)
     public User getUserById(Long userId) {
         return userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -86,6 +87,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
+    @CacheEvict(value = "userById", key = "#userId")
     @Transactional
     public User updateUser(UserUpdateDto dto, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -104,8 +106,8 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void addOrUpdateProfilePicture(Long userId, ProfilePictureDto dto) {
-        Url url = fileService.uploadImage(dto.file(), "profile-pictures", UUID.randomUUID().toString());
+    public void addOrUpdateProfilePicture(Long userId, MultipartFile file) {
+        Url url = fileService.uploadImage(file, "profile-pictures", UUID.randomUUID().toString());
         if(userRepository.updateImageUrl(userId, url) == 0) {
             fileService.deleteFile(url);
             throw new EntityNotFoundException("User not found");

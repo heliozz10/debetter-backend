@@ -9,6 +9,7 @@ import com.heliozz10.debetter.dto.util.request.out.OrganizerInvitationView;
 import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.mapper.util.request.OrganizerInvitationMapper;
 import com.heliozz10.debetter.service.util.request.OrganizerInvitationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
@@ -58,19 +61,25 @@ public class OrganizerInvitationController {
     }
 
     @PostMapping
-    public OrganizerInvitationView createOrganizerInvitation(@RequestBody OrganizerInvitationDto dto, Authentication authentication) {
+    public OrganizerInvitationView createOrganizerInvitation(@Valid @RequestBody OrganizerInvitationDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
+        if(user == null) {
+            return null;
+        }
+        if(Objects.equals(dto.inviteeUsername(), user.getUsername())) {
+            throw new IllegalArgumentException("Cannot invite yourself");
+        }
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
-        return organizerInvitationMapper.toOrganizerInvitationView(organizerInvitationService.createInvitation(profile.getId(), dto.inviteeId(), dto.tournamentId()));
+        return organizerInvitationMapper.toOrganizerInvitationView(organizerInvitationService.createInvitation(profile.getId(), dto.inviteeUsername(), dto.tournamentId()));
     }
 
-    @PostMapping("/accept/{id}")
+    @PostMapping("/{id}/accept")
     public void acceptInvitation(@PathVariable Long id, Authentication authentication) {
         Long inviteeId = ((User) authentication.getPrincipal()).getProfile().getId();
         organizerInvitationService.acceptInvitation(id, inviteeId);
     }
 
-    @PostMapping("/reject/{id}")
+    @PostMapping("/{id}/reject")
     public void rejectInvitation(@PathVariable Long id, Authentication authentication) {
         Long inviteeId = ((User) authentication.getPrincipal()).getProfile().getId();
         organizerInvitationService.rejectInvitation(id, inviteeId);

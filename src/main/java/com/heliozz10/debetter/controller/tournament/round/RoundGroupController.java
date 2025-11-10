@@ -6,6 +6,7 @@ import com.heliozz10.debetter.dto.tournament.round.out.RoundGroupView;
 import com.heliozz10.debetter.mapper.tournament.round.RoundGroupMapper;
 import com.heliozz10.debetter.service.tournament.TournamentService;
 import com.heliozz10.debetter.service.tournament.round.RoundGroupService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class RoundGroupController {
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping
-    public void changeRoundGroupFormat(@PathVariable Long tournamentId, @RequestParam RoundGroupType roundGroupType, @RequestBody DebateFormatDto format) {
+    public void changeRoundGroupFormat(@PathVariable Long tournamentId, @RequestParam RoundGroupType roundGroupType, @Valid @RequestBody DebateFormatDto format) {
         if(format.format() == null) {
             return;
         }

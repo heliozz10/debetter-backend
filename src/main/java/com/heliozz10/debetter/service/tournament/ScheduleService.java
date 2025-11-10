@@ -12,6 +12,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
@@ -39,14 +40,14 @@ public class ScheduleService {
     }
 
     @Transactional
-    public Schedule addScheduleToTournament(ScheduleFormDto scheduleFormDto, Long tournamentId) {
+    public Schedule addScheduleToTournament(ScheduleFormDto scheduleFormDto, MultipartFile image, Long tournamentId) {
         Tournament tournament = tournamentRepository.getReferenceById(tournamentId);
 
         Schedule schedule = scheduleMapper.toSchedule(scheduleFormDto);
 
         schedule.setTournament(tournament);
 
-        Url url = fileService.uploadImage(scheduleFormDto.image(), "schedules", UUID.randomUUID().toString());
+        Url url = fileService.uploadImage(image, "schedules", UUID.randomUUID().toString());
         schedule.setImageUrl(url);
 
         return scheduleRepository.save(schedule);

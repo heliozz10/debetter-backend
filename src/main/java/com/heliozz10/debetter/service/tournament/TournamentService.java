@@ -14,8 +14,6 @@ import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.content.user.profile.Profile;
 import com.heliozz10.debetter.content.user.role.TournamentRole;
 import com.heliozz10.debetter.content.util.media.Url;
-import com.heliozz10.debetter.content.util.request.OrganizerInvitation;
-import com.heliozz10.debetter.dto.tournament.in.OrganizerSelectorDto;
 import com.heliozz10.debetter.dto.tournament.in.TournamentFormDto;
 import com.heliozz10.debetter.dto.tournament.in.TournamentGetParams;
 import com.heliozz10.debetter.dto.tournament.team.in.ParticipantSelectorDto;
@@ -34,6 +32,7 @@ import com.heliozz10.debetter.repository.tournament.announcement.AnnouncementRep
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.repository.user.UserRepository;
 import com.heliozz10.debetter.repository.user.profile.OrganizerProfileRepository;
+import com.heliozz10.debetter.repository.user.profile.ParticipantProfileRepository;
 import com.heliozz10.debetter.security.tournament.TournamentSecurity;
 import com.heliozz10.debetter.service.CommonService;
 import com.heliozz10.debetter.service.tournament.round.RoundService;
@@ -50,6 +49,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -85,8 +85,6 @@ public class TournamentService {
 
     private final OrganizerProfileRepository organizerProfileRepository;
 
-    private final OrganizerInvitationService organizerInvitationService;
-
     private final ParticipantInvitationService participantInvitationService;
 
     private final RoundService roundService;
@@ -95,6 +93,7 @@ public class TournamentService {
 
     private final FileService fileService;
     private final CommonService commonService;
+    private final ParticipantProfileRepository participantProfileRepository;
 
     //TODO: create entity graphs !important
     //TOURNAMENT RETRIEVAL
@@ -114,7 +113,7 @@ public class TournamentService {
     //TOURNAMENT CREATION
 
     @Transactional
-    public Tournament createTournament(TournamentFormDto dto, Long organizerId) {
+    public Tournament createTournament(TournamentFormDto dto, MultipartFile image, Long organizerId) {
         if(
                 (dto.preliminaryFormat() == DebateFormat.KP && dto.teamEliminationFormat() != DebateFormat.KP) ||
                 (dto.preliminaryFormat() != DebateFormat.KP && dto.teamEliminationFormat() == DebateFormat.KP)) {
@@ -140,8 +139,8 @@ public class TournamentService {
 
         Tournament persistedTournament = tournamentRepository.save(tournament);
 
-        if(dto.image() != null) {
-            Url url = fileService.uploadFile(dto.image(), "tournaments/thumbnails", persistedTournament.getId().toString());
+        if(image != null) {
+            Url url = fileService.uploadFile(image, "tournaments/thumbnails", persistedTournament.getId().toString());
             tournament.setImageUrl(url);
         }
 
@@ -173,7 +172,7 @@ public class TournamentService {
     //TOURNAMENT UPDATING
 
     @Transactional
-    public Tournament updateTournament(TournamentFormDto dto, Long tournamentId) {
+    public Tournament updateTournament(TournamentFormDto dto, MultipartFile image, Long tournamentId) {
         Tournament tournament = tournamentRepository.findById(tournamentId)
                 .orElseThrow(() -> new EntityNotFoundException("Tournament not found"));
 
@@ -181,11 +180,11 @@ public class TournamentService {
             throw new IllegalStateException("Tournament has already started");
         }
 
-        if(dto.image() != null) {
+        if(image != null) {
             if(tournament.getImageUrl() != null) {
                 fileService.deleteFile(tournament.getImageUrl());
             }
-            Url url = fileService.uploadFile(dto.image(), "tournaments/thumbnails", tournament.getId().toString());
+            Url url = fileService.uploadFile(image, "tournaments/thumbnails", tournament.getId().toString());
             tournament.setImageUrl(url);
         }
 
@@ -204,32 +203,6 @@ public class TournamentService {
     @Transactional(readOnly = true)
     public List<User> getOrganizers(Long tournamentId) {
         return tournamentRepository.findOrganizersByTournamentId(tournamentId);
-    }
-
-    /**
-     * UNUSED
-     * @param organizerSelectorDto
-     * @param tournamentId
-     * @param inviterId
-     * @return
-     */
-    @Transactional
-    public OrganizerInvitation inviteOrganizerToTournament(OrganizerSelectorDto organizerSelectorDto, Long tournamentId, Long inviterId) {
-        Profile profile;
-
-        if(organizerSelectorDto.id() != null) {
-            profile = entityManager.getReference(OrganizerProfile.class, organizerSelectorDto.id());
-        } else if(organizerSelectorDto.username() != null) {
-            profile = userRepository.findByUsername(organizerSelectorDto.username()).orElseThrow(() -> new UsernameNotFoundException("User not found")).getProfile();
-        } else {
-            throw new IllegalArgumentException("Invalid organizer selector");
-        }
-
-        if(!(profile instanceof OrganizerProfile organizer)) {
-            throw new IllegalArgumentException("Trying to invite a non-organizer profile");
-        }
-
-        return organizerInvitationService.createInvitation(inviterId, profile.getId(), tournamentId);
     }
 
     @Transactional
@@ -310,12 +283,7 @@ public class TournamentService {
             );
         }
 
-        List<Long> invitedParticipantIds = teamFormDto.invitedParticipants().stream()
-                .map(selector -> resolveParticipantProfile(selector, teamFormDto.creatorId()))
-                .map(Profile::getId)
-                .toList();
-
-        participantInvitationService.createInvitations(teamFormDto.creatorId(), invitedParticipantIds, team.getId());
+        participantInvitationService.createInvitations(teamFormDto.creatorId(), teamFormDto.invitedParticipants(), team.getId());
 
         team.setActive(false);
         team.setCheckedIn(false);
@@ -325,6 +293,7 @@ public class TournamentService {
 
     /**
      * Resolves a participant profile from a selector DTO.
+     * UNUSED
      */
     private ParticipantProfile resolveParticipantProfile(ParticipantSelectorDto selector, Long creatorId) {
         Profile profile;

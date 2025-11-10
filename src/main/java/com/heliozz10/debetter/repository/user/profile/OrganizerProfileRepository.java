@@ -18,4 +18,6 @@ public interface OrganizerProfileRepository extends JpaRepository<OrganizerProfi
 
     @EntityGraph(value = "Profile.withUser", type = EntityGraph.EntityGraphType.LOAD)
     Optional<OrganizerProfile> findWithUserById(Long id);
+
+    Optional<OrganizerProfile> findByUser_Username(String username);
 }

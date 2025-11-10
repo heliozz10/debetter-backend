@@ -54,6 +54,7 @@ public class JudgeService {
         return judgeRepository.save(judge);
     }
 
+    @Transactional
     public Judge updateJudge(JudgeFormDto judgeFormDto, Long tournamentId, Long judgeId) {
         Judge judge = judgeRepository.findByTournamentIdAndId(tournamentId, judgeId)
                 .orElseThrow(() -> new EntityNotFoundException("Judge not found"));

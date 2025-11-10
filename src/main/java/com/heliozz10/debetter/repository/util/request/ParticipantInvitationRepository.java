@@ -31,6 +31,8 @@ public interface ParticipantInvitationRepository extends JpaRepository<Participa
 
     @Query("""
             select count(p) from ParticipantInvitation p
-            where p.inviter.id = ?1 and p.team.id = ?2 and p.invitee.id = ?3""")
-    long countExistingInvitation(Long id, Long id1, Long id2);
+            where p.inviter.id = ?1 and p.invitee.user.username = ?2 and p.team.id = ?3""")
+    long countExistingInvitations(Long id, String username, Long id1);
+
+    Optional<ParticipantInvitation> findByInviter_User_Username(String username);
 }

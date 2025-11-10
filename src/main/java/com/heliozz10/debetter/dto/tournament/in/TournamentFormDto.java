@@ -13,8 +13,7 @@ import java.time.LocalDateTime;
 
 public record TournamentFormDto(
         @NotNull(groups = {OnCreate.class}) @Size(min = 1, max = 50) String name,
-        String description,
-        MultipartFile image,
+        @Size(min = 1, max = 200) String description,
         @NotNull(groups = {OnCreate.class}) @Future LocalDateTime startDate,
         @Future LocalDateTime endDate,
         @NotNull(groups = {OnCreate.class}) @Future LocalDateTime registrationDeadline,

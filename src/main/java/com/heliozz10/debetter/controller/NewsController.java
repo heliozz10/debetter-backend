@@ -10,6 +10,8 @@ import com.heliozz10.debetter.dto.in.NewsGetParams;
 import com.heliozz10.debetter.dto.out.NewsView;
 import com.heliozz10.debetter.mapper.NewsMapper;
 import com.heliozz10.debetter.service.NewsService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,22 +19,24 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/news")
 public class NewsController {
     private final NewsService newsService;
-    private final NewsMapper newsMapper;
 
     @GetMapping
     public PageableResult<NewsView> getNews(
-            @ModelAttribute NewsGetParams params,
+            @Valid @ModelAttribute NewsGetParams params,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
         Page<News> news = newsService.getNews(params, pageable);
         return new PageableResult<>(
-                newsMapper.toNewsViews(news.getContent()),
+                news.getContent().stream().map(newsService::toNewsView).toList(),
                 news.getTotalElements(),
                 news.getTotalPages()
         );
@@ -40,22 +44,25 @@ public class NewsController {
 
     @GetMapping("/{id}")
     public NewsView getNewsById(@PathVariable Long id) {
-        return newsMapper.toNewsView(newsService.getNewsById(id));
+        return newsService.toNewsView(newsService.getNewsById(id));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER'")
     @PostMapping
-    public NewsView createNews(@RequestBody NewsDto dto, Authentication authentication) {
+    public NewsView createNews(@Valid @RequestPart("data") NewsDto dto, @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail, @RequestPart(value = "images", required = false) List<MultipartFile> images, Authentication authentication) {
+        if(images.size() > 10) {
+            throw new IllegalArgumentException("Too many images");
+        }
         User user = (User) authentication.getPrincipal();
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
-        return newsMapper.toNewsView(newsService.createNews(dto, profile.getId()));
+        return newsService.toNewsView(newsService.createNews(dto, thumbnail, images, profile.getId()));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER'")
     @PatchMapping("/{id}")
-    public NewsView updateNews(@PathVariable Long id, @RequestBody NewsDto dto, Authentication authentication) {
+    public NewsView updateNews(@PathVariable Long id, @Valid @RequestPart("data") NewsDto dto, @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail, @RequestPart(value = "images", required = false) List<MultipartFile> images, Authentication authentication) {
         Long authorId = ((User) authentication.getPrincipal()).getProfile().getId();
-        return newsMapper.toNewsView(newsService.updateNews(dto, id, authorId));
+        return newsService.toNewsView(newsService.updateNews(dto, thumbnail, images, id, authorId));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER'")

@@ -12,6 +12,7 @@ import com.heliozz10.debetter.dto.tournament.announcement.out.CommentView;
 import com.heliozz10.debetter.mapper.tournament.announcement.AnnouncementMapper;
 import com.heliozz10.debetter.mapper.tournament.announcement.CommentMapper;
 import com.heliozz10.debetter.service.tournament.AnnouncementService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -55,18 +57,18 @@ public class AnnouncementController {
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PostMapping
-    public AnnouncementView addAnnouncement(@PathVariable Long tournamentId, @RequestBody AnnouncementFormDto dto, Authentication authentication) {
+    public AnnouncementView addAnnouncement(@PathVariable Long tournamentId, @Valid @RequestPart("data") AnnouncementFormDto dto, @RequestPart(value = "image", required = false) MultipartFile image, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
-        return announcementService.toAnnouncementView(announcementService.addAnnouncementToTournament(dto, tournamentId, profile.getId()));
+        return announcementService.toAnnouncementView(announcementService.addAnnouncementToTournament(dto, image, tournamentId, profile.getId()));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping("/{id}")
-    public AnnouncementView updateAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody AnnouncementFormDto dto, Authentication authentication) {
+    public AnnouncementView updateAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id, @Valid @RequestPart("data") AnnouncementFormDto dto, @RequestPart(value = "image", required = false) MultipartFile image, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         OrganizerProfile profile = (OrganizerProfile) user.getProfile();
-        return announcementService.toAnnouncementView(announcementService.updateAnnouncement(dto, tournamentId, id, profile.getId()));
+        return announcementService.toAnnouncementView(announcementService.updateAnnouncement(dto, image, tournamentId, id, profile.getId()));
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
@@ -82,7 +84,7 @@ public class AnnouncementController {
     }
 
     @PostMapping("/{id}/comments")
-    public void addCommentToAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody CommentDto dto, Authentication authentication) {
+    public void addCommentToAnnouncement(@PathVariable Long tournamentId, @PathVariable Long id, @Valid @RequestBody CommentDto dto, Authentication authentication) {
         Long authorId = ((User) authentication.getPrincipal()).getId();
         announcementService.addCommentToAnnouncement(tournamentId, id, authorId, dto);
     }

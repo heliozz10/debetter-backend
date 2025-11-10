@@ -7,6 +7,8 @@ import com.heliozz10.debetter.content.tournament.match.Match;
 import com.heliozz10.debetter.content.tournament.team.Team;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.util.List;
 
@@ -22,10 +24,9 @@ import java.util.List;
                 }
         ),
         @NamedEntityGraph(
-                name = "Round.withTeamsAndDebaters",
+                name = "Round.withTeams",
                 attributeNodes = {
-                        @NamedAttributeNode("teams"),
-                        @NamedAttributeNode("debaters")
+                        @NamedAttributeNode("teams")
                 }
         )
 })

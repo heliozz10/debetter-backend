@@ -8,6 +8,7 @@ import com.heliozz10.debetter.dto.util.request.in.ParticipantInvitationDto;
 import com.heliozz10.debetter.dto.util.request.out.ParticipantInvitationView;
 import com.heliozz10.debetter.mapper.util.request.ParticipantInvitationMapper;
 import com.heliozz10.debetter.service.util.request.ParticipantInvitationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @RestController
@@ -55,10 +58,19 @@ public class ParticipantInvitationController {
     }
 
     @PostMapping
-    public ParticipantInvitationView createParticipantInvitation(@RequestBody ParticipantInvitationDto dto, Authentication authentication) {
+    public ParticipantInvitationView createParticipantInvitation(@Valid @RequestBody ParticipantInvitationDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
+
+        if(user == null) {
+            return null;
+        }
+        if(Objects.equals(dto.inviteeUsername(), user.getUsername())) {
+            throw new IllegalArgumentException("Cannot invite yourself");
+        }
         ParticipantProfile profile = (ParticipantProfile) user.getProfile();
-        return participantInvitationMapper.toParticipantInvitationView(participantInvitationService.createInvitation(profile.getId(), dto.inviteeId(), dto.teamId()));
+
+        //TODO: fix security
+        return participantInvitationMapper.toParticipantInvitationView(participantInvitationService.createInvitation(profile.getId(), dto.inviteeUsername(), dto.teamId()));
     }
 
     @PutMapping("/{id}/accept")

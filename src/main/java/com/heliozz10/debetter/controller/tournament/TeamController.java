@@ -1,6 +1,8 @@
 package com.heliozz10.debetter.controller.tournament;
 
 import com.heliozz10.debetter.content.tournament.team.Team;
+import com.heliozz10.debetter.content.user.User;
+import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
 import com.heliozz10.debetter.dto.common.out.PageableResult;
 import com.heliozz10.debetter.dto.tournament.team.in.TeamFormDto;
 import com.heliozz10.debetter.dto.tournament.team.in.TeamUpdateOrganizerDto;
@@ -10,11 +12,13 @@ import com.heliozz10.debetter.dto.tournament.team.out.TeamView;
 import com.heliozz10.debetter.mapper.tournament.TeamMapper;
 import com.heliozz10.debetter.service.tournament.TeamService;
 import com.heliozz10.debetter.service.tournament.TournamentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,19 +54,21 @@ public class TeamController {
 
     @PreAuthorize("principal.role.name() == 'PARTICIPANT'")
     @PostMapping
-    public void registerTeamToTournament(@PathVariable Long tournamentId, @RequestBody TeamFormDto dto) {
+    public void registerTeamToTournament(@PathVariable Long tournamentId, @Valid @RequestBody TeamFormDto dto) {
         tournamentService.registerTeamToTournament(dto, tournamentId);
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping("/{id}/organizer-update")
-    public void updateTeam_Organizer(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody TeamUpdateOrganizerDto dto) {
+    public void updateTeam_Organizer(@PathVariable Long tournamentId, @PathVariable Long id, @Valid @RequestBody TeamUpdateOrganizerDto dto) {
         teamService.updateTeam_Organizer(dto, tournamentId, id);
     }
 
     @PreAuthorize("principal.role.name() = 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @PatchMapping("/{id}/participant-update")
-    public void updateTeam_Participant(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody TeamUpdateParticipantDto dto) {
-        teamService.updateTeam_Participant(dto, tournamentId, id);
+    public void updateTeam_Participant(@PathVariable Long tournamentId, @PathVariable Long id, @Valid @RequestBody TeamUpdateParticipantDto dto, Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        ParticipantProfile profile = (ParticipantProfile) user.getProfile();
+        teamService.updateTeam_Participant(dto, tournamentId, id, profile.getId());
     }
 }

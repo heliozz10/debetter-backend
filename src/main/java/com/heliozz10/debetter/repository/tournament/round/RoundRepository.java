@@ -2,6 +2,7 @@ package com.heliozz10.debetter.repository.tournament.round;
 
 import com.heliozz10.debetter.content.tournament.DebateFormat;
 import com.heliozz10.debetter.content.tournament.Tournament;
+import com.heliozz10.debetter.content.tournament.TournamentParticipant;
 import com.heliozz10.debetter.content.tournament.round.Round;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,8 +29,11 @@ public interface RoundRepository extends JpaRepository<Round, Long> {
 
     Optional<Round> findByRoundGroup_IdAndRoundNumber(Long id, Integer roundNumber);
 
-    @EntityGraph(value = "Round.withTeamsAndDebaters", type = EntityGraph.EntityGraphType.LOAD)
-    Optional<Round> findWithTeamsAndDebatersByRoundGroup_IdAndRoundNumber(Long id, Integer roundNumber);
+    @EntityGraph(value = "Round.withTeams", type = EntityGraph.EntityGraphType.LOAD)
+    Optional<Round> findWithTeamsByRoundGroup_IdAndRoundNumber(Long id, Integer roundNumber);
+
+    @Query("SELECT r.debaters FROM Round r WHERE r.id = :roundId")
+    List<TournamentParticipant> findDebatersByRoundId(Long roundId);
 
     @Modifying
     @Query("UPDATE Round r SET r.customFormat = :format WHERE r.id = :roundId")

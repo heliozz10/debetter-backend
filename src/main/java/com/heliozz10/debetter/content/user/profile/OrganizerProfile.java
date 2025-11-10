@@ -5,6 +5,8 @@ import com.heliozz10.debetter.content.tournament.announcement.Announcement;
 import com.heliozz10.debetter.content.util.request.OrganizerInvitation;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.util.List;
 
@@ -16,8 +18,7 @@ import java.util.List;
         @NamedEntityGraph(
                 name = "OrganizerProfile.forView",
                 attributeNodes = {
-                        @NamedAttributeNode("organizedTournaments"),
-                        @NamedAttributeNode("coOrganizedTournaments"),
+                        @NamedAttributeNode("organizedTournaments")
                 }
         ),
         @NamedEntityGraph(

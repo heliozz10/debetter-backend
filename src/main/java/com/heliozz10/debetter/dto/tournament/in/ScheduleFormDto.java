@@ -5,7 +5,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public record ScheduleFormDto(
     @Size(min = 1, max = 50) String name,
-    @Size(min = 1, max = 200) String description,
-    MultipartFile image
+    @Size(min = 1, max = 200) String description
 ) {
 }

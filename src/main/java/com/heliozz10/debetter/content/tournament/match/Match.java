@@ -118,6 +118,9 @@ public class Match {
     @Column
     private Integer debater2Score;
 
+    @Column
+    private Boolean isBye;
+
     @Column(nullable = false)
     private Boolean completed;
 }

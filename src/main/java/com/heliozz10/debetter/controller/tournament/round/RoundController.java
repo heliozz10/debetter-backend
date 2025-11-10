@@ -5,6 +5,7 @@ import com.heliozz10.debetter.dto.tournament.round.out.RoundView;
 import com.heliozz10.debetter.dto.tournament.round.out.SimpleRoundView;
 import com.heliozz10.debetter.mapper.tournament.round.RoundMapper;
 import com.heliozz10.debetter.service.tournament.round.RoundService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class RoundController {
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
     @PatchMapping("/{id}")
-    public void updateRound(@PathVariable Long tournamentId, @PathVariable Long id, @RequestBody RoundUpdateDto roundUpdateDto) {
+    public void updateRound(@PathVariable Long tournamentId, @PathVariable Long id, @Valid @RequestBody RoundUpdateDto roundUpdateDto) {
         roundService.updateRound(roundUpdateDto, tournamentId, id);
     }
 

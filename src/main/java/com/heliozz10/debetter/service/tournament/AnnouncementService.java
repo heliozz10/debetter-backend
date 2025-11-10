@@ -6,6 +6,7 @@ import com.heliozz10.debetter.content.tournament.announcement.Comment;
 import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.user.profile.ParticipantProfile;
+import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.dto.tournament.announcement.in.AnnouncementFormDto;
 import com.heliozz10.debetter.dto.tournament.announcement.in.CommentDto;
 import com.heliozz10.debetter.dto.tournament.announcement.out.AnnouncementView;
@@ -15,6 +16,7 @@ import com.heliozz10.debetter.repository.tournament.TournamentRepository;
 import com.heliozz10.debetter.repository.tournament.announcement.AnnouncementRepository;
 import com.heliozz10.debetter.repository.tournament.announcement.CommentRepository;
 import com.heliozz10.debetter.repository.user.profile.OrganizerProfileRepository;
+import com.heliozz10.debetter.service.util.media.FileService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,6 +45,8 @@ public class AnnouncementService {
 
     private final UserMapper userMapper;
 
+    private final FileService fileService;
+
     @Transactional(readOnly = true)
     public Page<Announcement> getAnnouncementsByTournamentId(Long tournamentId, Pageable pageable) {
         return announcementRepository.findByTournamentId(tournamentId, pageable);
@@ -59,7 +64,7 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public Announcement addAnnouncementToTournament(AnnouncementFormDto announcementFormDto, Long tournamentId, Long creatorId) {
+    public Announcement addAnnouncementToTournament(AnnouncementFormDto announcementFormDto, MultipartFile image, Long tournamentId, Long creatorId) {
         Tournament tournament = tournamentRepository.getReferenceById(tournamentId);
 
         Announcement announcement = announcementMapper.toAnnouncement(announcementFormDto);
@@ -70,6 +75,11 @@ public class AnnouncementService {
         announcement.setAuthor(author);
         announcement.setTimestamp(LocalDateTime.now());
         announcement.setHidden(false);
+
+        if(image != null) {
+            Url url = fileService.uploadFile(image, "announcements", tournament.getId().toString());
+            announcement.setImageUrl(url);
+        }
 
         return announcementRepository.save(announcement);
     }
@@ -94,11 +104,19 @@ public class AnnouncementService {
     }
 
     @Transactional
-    public Announcement updateAnnouncement(AnnouncementFormDto announcementFormDto, Long tournamentId, Long announcementId, Long editorId) {
+    public Announcement updateAnnouncement(AnnouncementFormDto announcementFormDto, MultipartFile image, Long tournamentId, Long announcementId, Long editorId) {
         Announcement announcement = updateLastEdited(announcementId, editorId);
 
         if(announcement.getTournament().getId() != tournamentId) {
             throw new EntityNotFoundException("Announcement not found");
+        }
+
+        if(image != null) {
+            if(announcement.getImageUrl() != null) {
+                fileService.deleteFile(announcement.getImageUrl());
+            }
+            Url url = fileService.uploadFile(image, "announcements", tournamentId.toString());
+            announcement.setImageUrl(url);
         }
 
         announcementMapper.updateAnnouncement(announcementFormDto, announcement);

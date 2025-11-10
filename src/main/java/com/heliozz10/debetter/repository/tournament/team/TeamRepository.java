@@ -46,12 +46,12 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     void uncheckInTeamById(Long teamId);
 
     @Modifying
-    @Query("UPDATE Team t SET t.disqualified = true WHERE t.id = :teamId")
-    void setTeamDisqualifiedById(Long teamId);
+    @Query("UPDATE Team t SET t.disqualified = true WHERE t.id = :teamId AND t.tournament.id = :tournamentId")
+    void setTeamDisqualifiedByTournamentIdAndId(Long tournamentId, Long teamId);
 
     @Modifying
-    @Query("UPDATE Team t SET t.disqualified = false WHERE t.id = :teamId")
-    void setTeamNotDisqualifiedById(Long teamId);
+    @Query("UPDATE Team t SET t.disqualified = false WHERE t.id = :teamId AND t.tournament.id = :tournamentId")
+    void setTeamNotDisqualifiedByTournamentIdAndId(Long tournamentId, Long teamId);
 
     @Transactional
     @Modifying
@@ -65,4 +65,8 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     @EntityGraph(value = "Team.full", type = EntityGraph.EntityGraphType.LOAD)
     Optional<Team> findByTournamentIdAndId(Long tournamentId, Long id);
+
+    Team findByMembers_Id(Long id);
+
+    Optional<Team> findByTournament_IdAndMembers_IdAndId(Long id, Long id1, Long id2);
 }

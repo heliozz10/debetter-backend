@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -17,6 +18,7 @@ public interface TournamentParticipantRepository extends JpaRepository<Tournamen
     @Override
     Page<TournamentParticipant> findAll(Specification<TournamentParticipant> spec, Pageable pageable);
 
+    @Query("SELECT tp FROM TournamentParticipant tp WHERE tp.team.tournament.id = :tournamentId AND tp.id = :id")
     @EntityGraph(value = "TournamentParticipant.forView", type = EntityGraph.EntityGraphType.LOAD)
     Optional<TournamentParticipant> findByTournamentIdAndId(Long tournamentId, Long id);
 }

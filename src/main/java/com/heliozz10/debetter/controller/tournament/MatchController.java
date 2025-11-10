@@ -6,6 +6,7 @@ import com.heliozz10.debetter.dto.tournament.match.in.MatchResultDto;
 import com.heliozz10.debetter.dto.tournament.match.out.MatchView;
 import com.heliozz10.debetter.mapper.tournament.MatchMapper;
 import com.heliozz10.debetter.service.tournament.MatchService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,10 +38,10 @@ public class MatchController {
     }
 
     @PreAuthorize("principal.role.name() == 'ORGANIZER' and @tournamentSecurity.hasEditPermission(principal, #tournamentId)")
-    @PatchMapping("/{matchId}/results")
+    @PatchMapping("/results")
     public void submitMatchResults(
             @PathVariable Long tournamentId,
-            @RequestBody List<MatchResultDto> matchResultDto
+            @Valid @RequestBody List<MatchResultDto> matchResultDto
     ) {
         matchService.submitMatchResults(tournamentId, matchResultDto);
     }

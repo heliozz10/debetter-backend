@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: debetter
+  data:
+    web:
+      pageable:
+        max-page-size: 50
+    redis:
+      host: redis
+      port: 6380
+      password: 893fe9af-60e2-4ab4-952d-4a767f6670c0
+  datasource:
+    url: jdbc:postgresql://db:5432/debetter
+    username: debetter_user
+    password: debetter_password
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        search:
+          backend:
+            type: lucene
+            directory:
+              type: local-filesystem
+              root: /var/data/lucene-indexes/debetter-dev
+            analysis:
+              configurer: class:com.heliozz10.debetter.config.LuceneAnalysisConfig
+  mvc:
+    servlet:
+      path: /api
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+#  data:
+#    mongodb:
+#      uri: mongodb+srv://dauren190307:nonono@mango.oafyn.mongodb.net/debate-platform?retryWrites=true&w=majority&appName=Mango
+security:
+  remember-me:
+    key: 8e6c86b9-c575-4e87-b6ae-f05a5e66148c
+
+app:
+  file-upload:
+    storage-path: /var/www/debetter/uploads
+    public-url-prefix: /uploads/
+    max-file-size: 5242880 # 5MB in bytes

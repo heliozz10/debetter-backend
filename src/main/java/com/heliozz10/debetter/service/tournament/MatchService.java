@@ -27,7 +27,7 @@ public class MatchService {
         return matchRepository.findByRoundId(roundId, pageable);
     }
 
-    //TODO: fix this, this doesnt set the scores for the teams and debaters, it only sets the scores for the matches. Already done but saving the todo
+    //TODO: fix this, this doesnt set the scores for the teams and debaters, it only sets the scores for the matches. Already done but keeping the todo
     @Transactional
     public void submitMatchResults(Long tournamentId, Collection<MatchResultDto> results) {
         ArrayNode arrayNode = objectMapper.createArrayNode();

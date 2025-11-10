@@ -5,9 +5,12 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
 
 @Getter
 @Setter
+@Indexed
 @NamedEntityGraphs({
         @NamedEntityGraph(
                 name = "Profile.withUser",
@@ -23,6 +26,7 @@ public abstract class Profile {
     @GeneratedValue
     private Long id;
 
+    @IndexedEmbedded
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id")
     private User user;

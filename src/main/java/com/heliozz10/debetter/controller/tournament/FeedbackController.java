@@ -9,6 +9,7 @@ import com.heliozz10.debetter.dto.tournament.in.FeedbackGetParams;
 import com.heliozz10.debetter.dto.tournament.out.FeedbackView;
 import com.heliozz10.debetter.mapper.tournament.FeedbackMapper;
 import com.heliozz10.debetter.service.tournament.FeedbackService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +30,7 @@ public class FeedbackController {
     @GetMapping
     public PageableResult<FeedbackView> getFeedbacks(
             @PathVariable Long tournamentId,
-            @ModelAttribute FeedbackGetParams params,
+            @Valid @ModelAttribute FeedbackGetParams params,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
         Page<Feedback> feedbacks = feedbackService.getFeedbacks(tournamentId, params, pageable);
@@ -48,7 +49,7 @@ public class FeedbackController {
 
     @PreAuthorize("principal.role.name() == 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @PostMapping
-    public FeedbackView addFeedback(@PathVariable Long tournamentId, @RequestBody FeedbackDto dto, Authentication authentication) {
+    public FeedbackView addFeedback(@PathVariable Long tournamentId, @Valid @RequestBody FeedbackDto dto, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         ParticipantProfile profile = (ParticipantProfile) user.getProfile();
         return feedbackService.toFeedbackView(feedbackService.addFeedbackToTournament(dto, tournamentId, profile.getId()));
@@ -56,7 +57,7 @@ public class FeedbackController {
 
     @PreAuthorize("principal.role.name() == 'PARTICIPANT' and @tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @PatchMapping("/{id}")
-    public FeedbackView updateFeedback(Authentication authentication, @PathVariable Long id, @RequestBody FeedbackDto dto) {
+    public FeedbackView updateFeedback(Authentication authentication, @PathVariable Long id, @Valid @RequestBody FeedbackDto dto) {
         User user = (User) authentication.getPrincipal();
         ParticipantProfile profile = (ParticipantProfile) user.getProfile();
         return feedbackService.toFeedbackView(feedbackService.updateFeedback(dto, id, profile.getId()));

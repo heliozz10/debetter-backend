@@ -3,7 +3,6 @@ package com.heliozz10.debetter.controller.user;
 import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.util.socials.SocialPlatform;
 import com.heliozz10.debetter.dto.common.out.PageableResult;
-import com.heliozz10.debetter.dto.user.in.ProfilePictureDto;
 import com.heliozz10.debetter.dto.user.in.UserGetParams;
 import com.heliozz10.debetter.dto.user.in.UserUpdateDto;
 import com.heliozz10.debetter.dto.user.out.SimpleUserView;
@@ -11,6 +10,7 @@ import com.heliozz10.debetter.dto.user.out.UserView;
 import com.heliozz10.debetter.dto.util.socials.in.SocialProfileDto;
 import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.service.user.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +18,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +32,7 @@ public class UserController {
 
     @GetMapping
     public PageableResult<SimpleUserView> getUsers(
-            @ModelAttribute UserGetParams params,
+            @Valid @ModelAttribute UserGetParams params,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
         Page<User> users = userService.getUsers(params, pageable);
@@ -55,21 +56,21 @@ public class UserController {
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PatchMapping("/{id}")
-    public UserView updateUser(@PathVariable Long id, @RequestBody UserUpdateDto user) {
+    public UserView updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDto user) {
         return userMapper.toUserView(userService.updateUser(user, id));
     }
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PostMapping("/{id}/profile-picture")
-    public void addOrUpdateProfilePicture(@PathVariable Long id, @RequestBody ProfilePictureDto dto) {
-        userService.addOrUpdateProfilePicture(id, dto);
+    public void addOrUpdateProfilePicture(@PathVariable Long id, @RequestPart("image") MultipartFile file) {
+        userService.addOrUpdateProfilePicture(id, file);
     }
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PostMapping("/me/profile-picture")
-    public void addOrUpdateMyProfilePicture(Authentication authentication, @RequestBody ProfilePictureDto dto) {
+    public void addOrUpdateMyProfilePicture(Authentication authentication, @RequestPart("image") MultipartFile file) {
         Long id = ((User) authentication.getPrincipal()).getId();
-        userService.addOrUpdateProfilePicture(id, dto);
+        userService.addOrUpdateProfilePicture(id, file);
     }
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
@@ -87,13 +88,13 @@ public class UserController {
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PostMapping("/{id}/social-profiles")
-    public void addOrUpdateSocialProfiles(@PathVariable Long id, Collection<SocialProfileDto> newProfiles) {
+    public void addOrUpdateSocialProfiles(@PathVariable Long id, @Valid Collection<SocialProfileDto> newProfiles) {
         userService.addOrUpdateSocialProfiles(id, newProfiles);
     }
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PostMapping("/me/social-profiles")
-    public void addOrUpdateMySocialProfiles(Authentication authentication, Collection<SocialProfileDto> newProfiles) {
+    public void addOrUpdateMySocialProfiles(Authentication authentication, @Valid Collection<SocialProfileDto> newProfiles) {
         Long id = ((User) authentication.getPrincipal()).getId();
         userService.addOrUpdateSocialProfiles(id, newProfiles);
     }

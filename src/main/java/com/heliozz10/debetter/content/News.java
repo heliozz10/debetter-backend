@@ -5,9 +5,8 @@ import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.util.media.Url;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,6 +58,7 @@ public class News {
     @Column(nullable = false)
     private String content;
 
+    @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.SHALLOW)
     @IndexedEmbedded(includePaths = {"name"})
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

@@ -9,9 +9,11 @@ import com.heliozz10.debetter.content.user.role.UserTournamentRole;
 import com.heliozz10.debetter.content.util.media.Url;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -113,6 +115,7 @@ public class Tournament {
     @OneToMany(mappedBy = "tournament", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Schedule> schedules;
 
+    @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.SHALLOW)
     @IndexedEmbedded(includePaths = {"name"})
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

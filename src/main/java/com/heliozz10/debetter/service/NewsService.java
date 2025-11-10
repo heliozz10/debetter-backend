@@ -6,7 +6,9 @@ import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.dto.in.NewsDto;
 import com.heliozz10.debetter.dto.in.NewsGetParams;
+import com.heliozz10.debetter.dto.out.NewsView;
 import com.heliozz10.debetter.mapper.NewsMapper;
+import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.repository.NewsRepository;
 import com.heliozz10.debetter.repository.specification.NewsSpecification;
 import com.heliozz10.debetter.service.util.media.FileService;
@@ -35,6 +37,8 @@ public class NewsService {
 
     private final FileService fileService;
 
+    private final UserMapper userMapper;
+
     @Transactional(readOnly = true)
     public Page<News> getNews(NewsGetParams params, Pageable pageable) {
         Specification<News> specification = NewsSpecification.filterBy(params, entityManager);
@@ -47,24 +51,25 @@ public class NewsService {
     }
 
     @Transactional
-    public News createNews(NewsDto newsDto, Long authorId) {
+    public News createNews(NewsDto newsDto, MultipartFile thumbnail, List<MultipartFile> images, Long authorId) {
         News news = newsMapper.toNews(newsDto);
 
         news.setAuthor(entityManager.getReference(OrganizerProfile.class, authorId));
 
-        setUnmappableFields(newsDto, news);
+        setUnmappableFields(newsDto, thumbnail, images, news);
 
         news.setTimestamp(LocalDateTime.now());
+
         return newsRepository.save(news);
     }
 
     @Transactional
-    public News updateNews(NewsDto newsDto, Long newsId, Long authorId) {
+    public News updateNews(NewsDto newsDto, MultipartFile thumbnail, List<MultipartFile> images, Long newsId, Long authorId) {
         News news = newsRepository.findByAuthorIdAndId(authorId, newsId).orElseThrow(() -> new EntityNotFoundException("News not found"));
 
         newsMapper.updateNews(newsDto, news);
 
-        setUnmappableFields(newsDto, news);
+        setUnmappableFields(newsDto, thumbnail, images, news);
 
         news.setLastEdited(LocalDateTime.now());
         return newsRepository.save(news);
@@ -78,24 +83,30 @@ public class NewsService {
         newsRepository.deleteById(newsId);
     }
 
-    private void setUnmappableFields(NewsDto newsDto, News news) {
+    private void setUnmappableFields(NewsDto newsDto, MultipartFile thumbnail, List<MultipartFile> images, News news) {
         final String newsPath = "news/";
 
-        if(newsDto.thumbnail() != null) {
-            Url thumbnailUrl = fileService.uploadImage(newsDto.thumbnail(), newsPath + "thumbnails", UUID.randomUUID().toString());
+        if(thumbnail != null) {
+            Url thumbnailUrl = fileService.uploadImage(thumbnail, newsPath + "thumbnails", UUID.randomUUID().toString());
             news.setThumbnailUrl(thumbnailUrl);
         }
 
-        Map<String, MultipartFile> images = new HashMap<>();
+        Map<String, MultipartFile> imagesMap = new HashMap<>();
 
-        for (int i = 0; i < newsDto.images().size(); i++) {
-            images.put(UUID.randomUUID().toString(), newsDto.images().get(i));
+        for (int i = 0; i < images.size(); i++) {
+            imagesMap.put(UUID.randomUUID().toString(), images.get(i));
         }
 
-        List<Url> imageUrls = fileService.uploadImages(images, newsPath + "images");
+        List<Url> imageUrls = fileService.uploadImages(imagesMap, newsPath + "images");
 
         news.setImages(imageUrls);
 
         news.setTags(tagService.findOrCreateTags(TagType.NEWS, newsDto.tags()));
+    }
+
+    public NewsView toNewsView(News news) {
+        NewsView view = newsMapper.toNewsView(news);
+        view.setUser(userMapper.toSimpleUserView(news.getAuthor().getUser()));
+        return view;
     }
 }

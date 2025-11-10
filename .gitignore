@@ -52,3 +52,5 @@ build/
 *~
 
 /src/main/resources/application.yml
+/src/main/resources/application-docker.yml
+/debetter-app.tar

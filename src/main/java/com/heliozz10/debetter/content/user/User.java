@@ -6,9 +6,13 @@ import com.heliozz10.debetter.content.util.media.Url;
 import com.heliozz10.debetter.content.util.socials.SocialProfile;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.search.mapper.pojo.automaticindexing.ReindexOnUpdate;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexingDependency;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
+//TODO: add rating
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,8 +38,7 @@ import java.util.stream.Stream;
         @NamedEntityGraph(
                 name = "User.forSecurity",
                 attributeNodes = {
-                        @NamedAttributeNode("authorities"),
-                        @NamedAttributeNode("tournamentRoles")
+                        @NamedAttributeNode("authorities")
                 }
         )
 })
@@ -76,9 +80,6 @@ public class User implements UserDetails {
     )
     private List<Authority> authorities;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserTournamentRole> tournamentRoles;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -86,6 +87,7 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Profile profile;
 
+    @IndexingDependency(reindexOnUpdate = ReindexOnUpdate.SHALLOW)
     @IndexedEmbedded(includePaths = {"handle"})
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")

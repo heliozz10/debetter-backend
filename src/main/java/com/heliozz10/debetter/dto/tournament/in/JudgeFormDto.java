@@ -11,6 +11,7 @@ public record JudgeFormDto(
                 regexp = "^\\+?[0-9]{10,15}$",
                 message = "Phone number must be valid (10–15 digits, optional leading +)"
         ) String phoneNumber,
-        @Size(min = 1, max = 50) String email
+        @Size(min = 1, max = 50) String email,
+        Boolean checkedIn
 ) {
 }

@@ -74,8 +74,8 @@ public class TeamService {
     }
 
     @Transactional
-    public int updateTeam_Participant(TeamUpdateParticipantDto teamUpdateParticipantDto, Long tournamentId, Long teamId) {
-        Team team = teamRepository.findByTournamentIdAndId(tournamentId, teamId)
+    public int updateTeam_Participant(TeamUpdateParticipantDto teamUpdateParticipantDto, Long tournamentId, Long teamId, Long memberId) {
+        Team team = teamRepository.findByTournament_IdAndMembers_IdAndId(tournamentId, memberId, teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
         return teamRepository.updateNameAndClubById(
