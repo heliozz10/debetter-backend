@@ -1,15 +1,11 @@
 package com.heliozz10.debetter.controller.tournament;
 
-import com.heliozz10.debetter.content.tournament.DebateFormat;
 import com.heliozz10.debetter.content.tournament.Tournament;
-import com.heliozz10.debetter.content.tournament.round.RoundGroupType;
 import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
 import com.heliozz10.debetter.dto.common.out.PageableResult;
-import com.heliozz10.debetter.dto.tournament.in.DebateFormatDto;
 import com.heliozz10.debetter.dto.tournament.in.TournamentFormDto;
 import com.heliozz10.debetter.dto.tournament.in.TournamentGetParams;
-import com.heliozz10.debetter.dto.tournament.out.SimpleTournamentView;
 import com.heliozz10.debetter.dto.tournament.out.TournamentView;
 import com.heliozz10.debetter.dto.user.out.SimpleUserView;
 import com.heliozz10.debetter.dto.user.out.UserView;
@@ -17,7 +13,6 @@ import com.heliozz10.debetter.mapper.tournament.TournamentMapper;
 import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.service.tournament.TournamentService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,7 +38,7 @@ public class TournamentController {
     private final TeamRepository teamRepository;
 
     @GetMapping
-    public PageableResult<SimpleTournamentView> getTournaments(
+    public PageableResult<TournamentView> getTournaments(
             @Valid @ModelAttribute TournamentGetParams params,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {

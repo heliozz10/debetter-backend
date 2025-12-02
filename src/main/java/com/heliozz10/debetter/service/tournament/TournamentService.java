@@ -134,6 +134,7 @@ public class TournamentService {
         tournament.setMainOrganizer(organizer);
         tournament.setStarted(false);
         tournament.setFinished(false);
+        tournament.setDisabled(false);
 
         generateRounds(tournament, dto.preliminaryRoundCount(), dto.eliminationRoundCount());
 

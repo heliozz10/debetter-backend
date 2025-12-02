@@ -1,14 +1,12 @@
 package com.heliozz10.debetter.dto.user.profile.out;
 
-import com.heliozz10.debetter.dto.tournament.out.SimpleTournamentView;
-import com.heliozz10.debetter.dto.user.out.SimpleUserView;
+import com.heliozz10.debetter.dto.tournament.out.TournamentView;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
 @Data
 public class OrganizerProfileView {
-    private List<SimpleTournamentView> organizedTournaments;
-    private List<SimpleTournamentView> coOrganizedTournaments;
+    private List<TournamentView> organizedTournaments;
+    private List<TournamentView> coOrganizedTournaments;
 }
