@@ -22,10 +22,7 @@ public interface TournamentMapper {
     Tournament toTournament(TournamentFormDto dto);
     void updateTournament(TournamentFormDto dto, @MappingTarget Tournament tournament);
 
-    TournamentView toSimpleTournamentView(Tournament tournament);
-
-    List<TournamentView> toSimpleTournamentViews(List<Tournament> tournaments);
-
-    @InheritConfiguration(name = "toSimpleTournamentView")
     TournamentView toTournamentView(Tournament tournament);
+
+    List<TournamentView> toTournamentViews(List<Tournament> tournaments);
 }

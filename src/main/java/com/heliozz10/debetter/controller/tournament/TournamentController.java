@@ -44,7 +44,7 @@ public class TournamentController {
     ) {
         Page<Tournament> tournaments = tournamentService.getTournaments(params, pageable);
         return new PageableResult<>(
-                tournamentMapper.toSimpleTournamentViews(tournaments.getContent()),
+                tournamentMapper.toTournamentViews(tournaments.getContent()),
                 tournaments.getTotalElements(),
                 tournaments.getTotalPages()
         );
