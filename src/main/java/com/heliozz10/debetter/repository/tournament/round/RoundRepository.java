@@ -47,7 +47,6 @@ public interface RoundRepository extends JpaRepository<Round, Long> {
     """)
     boolean areAllMatchesCompleted(@Param("round") Round round);
 
-    @Modifying
     @Query(value = "SELECT assign_judges_for_round(:roundId)", nativeQuery = true)
     void assignJudgesForRound(@Param("roundId") Long roundId);
 

@@ -73,13 +73,13 @@ public class ParticipantInvitationController {
         return participantInvitationMapper.toParticipantInvitationView(participantInvitationService.createInvitation(profile.getId(), dto.inviteeUsername(), dto.teamId()));
     }
 
-    @PutMapping("/{id}/accept")
+    @PostMapping("/{id}/accept")
     public void acceptInvitation(@PathVariable Long id, Authentication authentication) {
         Long inviteeId = ((User) authentication.getPrincipal()).getProfile().getId();
         participantInvitationService.acceptInvitation(id, inviteeId);
     }
 
-    @PutMapping("/{id}/reject")
+    @PostMapping("/{id}/reject")
     public void rejectInvitation(@PathVariable Long id, Authentication authentication) {
         Long inviteeId = ((User) authentication.getPrincipal()).getProfile().getId();
         participantInvitationService.rejectInvitation(id, inviteeId);

@@ -61,13 +61,13 @@ public class RoundService {
         }
     }
 
+    @Transactional
     public void generateMatchesAndAssignJudges(Round round) {
         generateMatches(round);
         assignJudges(round);
     }
 
     //TODO: automatically assign judges. Done
-    // -------- CODE BELOW IS AI GENERATED AND NOT PROPERLY REVISED YET --------
     /**
      * Generates matches for a round. This method works with teams already set for the round. Does not check if teams are eligible.
      * So this method should only be called when teams are already set for the round and are eligible.
@@ -246,7 +246,7 @@ public class RoundService {
         match.setDebater2(g.get(1));
     }
 
-    /** -------- Helper utils -------- */
+    /** helper stuff -------- */
     private static long key(long a, long b) {
         return (Math.min(a, b) << 32) | Math.max(a, b);
     }
@@ -282,8 +282,6 @@ public class RoundService {
         else if (history instanceof DebaterMatchupHistory) ((DebaterMatchupHistory) history).setTimesFaced(times);
         else throw new IllegalArgumentException("Unsupported history type");
     }
-
-    // -------- END OF AI GENERATED CODE --------
 
     @Transactional
     public void assignJudges(Round round) {

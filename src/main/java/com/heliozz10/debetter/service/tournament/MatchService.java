@@ -42,7 +42,7 @@ public class MatchService {
             for (int i = 0; i < 4; i++) {
                 String fieldName = "team" + (i + 1) + "score";
                 Integer score = null;
-                if (i < result.teamResults().size()) {
+                if (result.teamResults() != null && i < result.teamResults().size()) {
                     List<ParticipantScoreDto> ps = result.teamResults().get(i).participantScores();
                     score = ps.stream()
                             .map(ParticipantScoreDto::score)
@@ -55,7 +55,7 @@ public class MatchService {
             for (int i = 0; i < 2; i++) {
                 String fieldName = "debater" + (i + 1) + "score";
                 Integer score = null;
-                if (i < result.participantScores().size()) {
+                if (result.participantScores() != null && i < result.participantScores().size()) {
                     score = result.participantScores().get(i).score();
                 }
                 objectNode.put(fieldName, score);

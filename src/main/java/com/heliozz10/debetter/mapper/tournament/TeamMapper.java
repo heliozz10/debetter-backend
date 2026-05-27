@@ -23,4 +23,7 @@ public interface TeamMapper {
 
     @InheritConfiguration(name = "toSimpleTeamView")
     TeamView toTeamView(Team team);
+
+    @InheritConfiguration(name = "toSimpleTeamView")
+    List<TeamView> toTeamViews(List<Team> teams);
 }

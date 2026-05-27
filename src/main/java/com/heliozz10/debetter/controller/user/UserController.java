@@ -8,10 +8,12 @@ import com.heliozz10.debetter.dto.user.in.UserUpdateDto;
 import com.heliozz10.debetter.dto.user.out.SimpleUserView;
 import com.heliozz10.debetter.dto.user.out.UserView;
 import com.heliozz10.debetter.dto.util.socials.in.SocialProfileDto;
+import com.heliozz10.debetter.dto.util.socials.in.SocialProfilesDto;
 import com.heliozz10.debetter.mapper.user.UserMapper;
 import com.heliozz10.debetter.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -20,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,6 +51,7 @@ public class UserController {
         return userMapper.toUserView(userService.getUserById(id));
     }
 
+    @Cacheable(value = "currentUser", key = "#authentication.principal.id")
     @GetMapping("/me")
     public UserView getMe(Authentication authentication) {
         Long id = ((User) authentication.getPrincipal()).getId();
@@ -66,7 +70,6 @@ public class UserController {
         userService.addOrUpdateProfilePicture(id, file);
     }
 
-    @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PostMapping("/me/profile-picture")
     public void addOrUpdateMyProfilePicture(Authentication authentication, @RequestPart("image") MultipartFile file) {
         Long id = ((User) authentication.getPrincipal()).getId();
@@ -79,7 +82,6 @@ public class UserController {
         userService.deleteProfilePicture(id);
     }
 
-    @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @DeleteMapping("/me/profile-picture")
     public void deleteMyProfilePicture(Authentication authentication) {
         Long id = ((User) authentication.getPrincipal()).getId();
@@ -88,15 +90,14 @@ public class UserController {
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PostMapping("/{id}/social-profiles")
-    public void addOrUpdateSocialProfiles(@PathVariable Long id, @Valid Collection<SocialProfileDto> newProfiles) {
-        userService.addOrUpdateSocialProfiles(id, newProfiles);
+    public void addOrUpdateSocialProfiles(@PathVariable Long id, @Valid @RequestBody SocialProfilesDto newProfiles) {
+        userService.addOrUpdateSocialProfiles(id, newProfiles.socialProfiles());
     }
 
-    @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @PostMapping("/me/social-profiles")
-    public void addOrUpdateMySocialProfiles(Authentication authentication, @Valid Collection<SocialProfileDto> newProfiles) {
+    public void addOrUpdateMySocialProfiles(Authentication authentication, @Valid @RequestBody SocialProfilesDto newProfiles) {
         Long id = ((User) authentication.getPrincipal()).getId();
-        userService.addOrUpdateSocialProfiles(id, newProfiles);
+        userService.addOrUpdateSocialProfiles(id, newProfiles.socialProfiles());
     }
 
     @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
@@ -109,7 +110,6 @@ public class UserController {
         }
     }
 
-    @PreAuthorize("@userSecurity.canEditUser(principal, #id)")
     @DeleteMapping("/me/social-profiles")
     public void removeAllMySocialProfiles(Authentication authentication, @RequestParam(required = false) List<SocialPlatform> platforms) {
         Long id = ((User) authentication.getPrincipal()).getId();

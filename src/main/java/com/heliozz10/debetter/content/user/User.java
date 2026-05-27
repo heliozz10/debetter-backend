@@ -32,6 +32,7 @@ import java.util.stream.Stream;
         @NamedEntityGraph(
                 name = "User.forView",
                 attributeNodes = {
+                        @NamedAttributeNode("profile"),
                         @NamedAttributeNode("socialProfiles")
                 }
         ),
@@ -53,7 +54,7 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String username;
 
-    @Column
+    @Column(unique = true, nullable = false)
     private String password;
 
     @FullTextField(analyzer = "edge_ngram")

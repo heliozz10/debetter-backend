@@ -7,11 +7,13 @@ import com.heliozz10.debetter.dto.user.out.SimpleUserView;
 import com.heliozz10.debetter.dto.user.out.UserView;
 import com.heliozz10.debetter.mapper.user.profile.OrganizerProfileMapper;
 import com.heliozz10.debetter.mapper.user.profile.ParticipantProfileMapper;
+import com.heliozz10.debetter.mapper.util.socials.SocialProfileMapper;
 import org.mapstruct.*;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {
+        SocialProfileMapper.class,
         OrganizerProfileMapper.class,
         ParticipantProfileMapper.class
 })

@@ -4,6 +4,7 @@ import com.heliozz10.debetter.content.News;
 import com.heliozz10.debetter.dto.in.NewsDto;
 import com.heliozz10.debetter.dto.out.NewsView;
 import com.heliozz10.debetter.mapper.user.profile.OrganizerProfileMapper;
+import com.heliozz10.debetter.mapper.util.media.UrlMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -15,7 +16,8 @@ import java.util.List;
         componentModel = "spring",
         uses = {
                 TagMapper.class,
-                OrganizerProfileMapper.class
+                OrganizerProfileMapper.class,
+                UrlMapper.class
         },
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )

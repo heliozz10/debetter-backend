@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -59,7 +60,7 @@ public class Team {
     private Club club;
 
     @OneToMany(mappedBy = "team", fetch = FetchType.LAZY)
-    private List<TournamentParticipant> members;
+    private List<TournamentParticipant> members = new ArrayList<>();
 
     @Column
     private Integer preliminaryScore;

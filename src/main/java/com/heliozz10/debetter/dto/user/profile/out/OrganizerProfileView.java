@@ -8,5 +8,4 @@ import java.util.List;
 @Data
 public class OrganizerProfileView {
     private List<TournamentView> organizedTournaments;
-    private List<TournamentView> coOrganizedTournaments;
 }

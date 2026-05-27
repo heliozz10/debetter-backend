@@ -29,6 +29,8 @@ import com.heliozz10.debetter.repository.tournament.JudgeRepository;
 import com.heliozz10.debetter.repository.tournament.TournamentParticipantRepository;
 import com.heliozz10.debetter.repository.tournament.TournamentRepository;
 import com.heliozz10.debetter.repository.tournament.announcement.AnnouncementRepository;
+import com.heliozz10.debetter.repository.tournament.round.RoundGroupRepository;
+import com.heliozz10.debetter.repository.tournament.round.RoundRepository;
 import com.heliozz10.debetter.repository.tournament.team.TeamRepository;
 import com.heliozz10.debetter.repository.user.UserRepository;
 import com.heliozz10.debetter.repository.user.profile.OrganizerProfileRepository;
@@ -52,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -94,6 +97,9 @@ public class TournamentService {
     private final FileService fileService;
     private final CommonService commonService;
     private final ParticipantProfileRepository participantProfileRepository;
+    private final RoundGroupRepository roundGroupRepository;
+
+    private final RoundRepository roundRepository;
 
     //TODO: create entity graphs !important
     //TOURNAMENT RETRIEVAL
@@ -114,6 +120,10 @@ public class TournamentService {
 
     @Transactional
     public Tournament createTournament(TournamentFormDto dto, MultipartFile image, Long organizerId) {
+        if (dto.preliminaryFormat() == DebateFormat.LD || dto.teamEliminationFormat() == DebateFormat.LD) {
+            throw new IllegalArgumentException("Please use only APF, BPF or KP");
+        }
+
         if(
                 (dto.preliminaryFormat() == DebateFormat.KP && dto.teamEliminationFormat() != DebateFormat.KP) ||
                 (dto.preliminaryFormat() != DebateFormat.KP && dto.teamEliminationFormat() == DebateFormat.KP)) {
@@ -136,9 +146,9 @@ public class TournamentService {
         tournament.setFinished(false);
         tournament.setDisabled(false);
 
-        generateRounds(tournament, dto.preliminaryRoundCount(), dto.eliminationRoundCount());
-
         Tournament persistedTournament = tournamentRepository.save(tournament);
+
+        generateRounds(persistedTournament, dto.preliminaryRoundCount(), dto.eliminationRoundCount());
 
         if(image != null) {
             Url url = fileService.uploadFile(image, "tournaments/thumbnails", persistedTournament.getId().toString());
@@ -150,24 +160,38 @@ public class TournamentService {
         return persistedTournament;
     }
 
+    @Transactional
     private void generateRounds(Tournament tournament, int preliminaryRoundCount, int eliminationRoundCount) {
+        List<RoundGroup> roundGroups = new ArrayList<>();
+        List<Round> rounds = new ArrayList<>();
+
         RoundGroup preliminaryRoundGroup = new RoundGroup(tournament, RoundGroupType.PRELIMINARY, tournament.getPreliminaryFormat());
+        preliminaryRoundGroup.setCurrentRoundNumber(1);
+        roundGroups.add(preliminaryRoundGroup);
         for(int i = 0; i < preliminaryRoundCount; i++) {
             Round preliminaryRound = new Round(preliminaryRoundGroup, "Round " + (i + 1), i + 1);
+            rounds.add(preliminaryRound);
             preliminaryRound.setRoundGroup(preliminaryRoundGroup);
         }
 
         RoundGroup soloEliminationRoundGroup = new RoundGroup(tournament, RoundGroupType.SOLO_ELIMINATION, DebateFormat.LD);
+        roundGroups.add(soloEliminationRoundGroup);
         for(int i = 0; i < eliminationRoundCount; i++) {
-            Round soloEliminationRound = new Round(soloEliminationRoundGroup, i == eliminationRoundCount - 1 ? "Final" : "1/" + (eliminationRoundCount - 1 - i), i + 1);
+            Round soloEliminationRound = new Round(soloEliminationRoundGroup, i == eliminationRoundCount - 1 ? "Final" : "1/" + Math.pow(2, (eliminationRoundCount - 1 - i)), i + 1);
+            rounds.add(soloEliminationRound);
             soloEliminationRound.setRoundGroup(soloEliminationRoundGroup);
         }
 
         RoundGroup teamEliminationRoundGroup = new RoundGroup(tournament, RoundGroupType.TEAM_ELIMINATION, tournament.getTeamEliminationFormat());
+        roundGroups.add(teamEliminationRoundGroup);
         for(int i = 0; i < eliminationRoundCount; i++) {
-            Round teamEliminationRound = new Round(teamEliminationRoundGroup, i == eliminationRoundCount - 1 ? "Final" : "1/" + (eliminationRoundCount - 1 - i), i + 1);
+            Round teamEliminationRound = new Round(teamEliminationRoundGroup, i == eliminationRoundCount - 1 ? "Final" : "1/" + Math.pow(2, (eliminationRoundCount - 1 - i)), i + 1);
+            rounds.add(teamEliminationRound);
             teamEliminationRound.setRoundGroup(teamEliminationRoundGroup);
         }
+
+        roundGroupRepository.saveAll(roundGroups);
+        roundRepository.saveAll(rounds);
     }
 
     //TOURNAMENT UPDATING
@@ -247,13 +271,30 @@ public class TournamentService {
 
         validateTeamLimit(tournament, teamFormDto);
 
+        int requiredParticipants = (tournament.getPreliminaryFormat() == DebateFormat.APF) ? 1 : 2;
+
+        if (teamFormDto.invitedParticipants() != null && teamFormDto.invitedParticipants().size() > requiredParticipants) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid number of invited participants. Required: %d, Actual: %d",
+                            requiredParticipants, teamFormDto.invitedParticipants().size())
+            );
+        }
+
         Team team = teamMapper.toTeam(teamFormDto);
         team.setClub(commonService.findOrCreateEntity(teamFormDto.club(), Club.class, entityManager));
         team.setTournament(tournament);
+        team.setActive(false);
+        team.setCheckedIn(false);
 
-        registerTeamCreator(teamFormDto, tournament, team);
+        Team persistedTeam = teamRepository.save(team);
 
-        registerInvitedParticipants(teamFormDto, tournament, team);
+        registerTeamCreator(teamFormDto, tournament, persistedTeam);
+
+        if(!(teamFormDto.invitedParticipants() == null) && !teamFormDto.invitedParticipants().isEmpty()) {
+            registerInvitedParticipants(teamFormDto, team);
+        }
+
+        teamRepository.save(persistedTeam);
     }
 
     private void validateTeamLimit(Tournament tournament, TeamFormDto teamFormDto) {
@@ -262,32 +303,24 @@ public class TournamentService {
         }
     }
 
+    @Transactional
     private void registerTeamCreator(TeamFormDto teamFormDto, Tournament tournament, Team team) {
         ParticipantProfile teamCreator = entityManager.getReference(ParticipantProfile.class, teamFormDto.creatorId());
 
         TournamentParticipant participant = new TournamentParticipant();
         participant.setTeam(team);
         participant.setParticipantProfile(teamCreator);
+        participant.setSpeakerScore(0);
+
+        team.getMembers().add(participant);
 
         tournamentParticipantRepository.save(participant);
 
         tournamentSecurity.assignRoleToUser(teamCreator.getUser().getId(), tournament.getId(), TournamentRole.VIEW);
     }
 
-    private void registerInvitedParticipants(TeamFormDto teamFormDto, Tournament tournament, Team team) {
-        int requiredParticipants = (tournament.getPreliminaryFormat() == DebateFormat.APF) ? 1 : 2;
-
-        if (teamFormDto.invitedParticipants().size() != requiredParticipants) {
-            throw new IllegalArgumentException(
-                    String.format("%s tournaments must have %d invited participant(s) per team",
-                            tournament.getPreliminaryFormat(), requiredParticipants + 1)
-            );
-        }
-
+    private void registerInvitedParticipants(TeamFormDto teamFormDto, Team team) {
         participantInvitationService.createInvitations(teamFormDto.creatorId(), teamFormDto.invitedParticipants(), team.getId());
-
-        team.setActive(false);
-        team.setCheckedIn(false);
 
         teamRepository.save(team);
     }
@@ -326,6 +359,7 @@ public class TournamentService {
             tournamentSecurity.removeRoleFromUser(profile.getUser().getId(), tournamentId, TournamentRole.VIEW);
         });
 
+        tournamentParticipantRepository.deleteAll(team.getMembers());
         teamRepository.deleteById(teamId);
     }
 
@@ -346,7 +380,7 @@ public class TournamentService {
             throw new IllegalArgumentException("Not enough team members");
         }
 
-        team.setCheckedIn(true);
+        teamRepository.checkInTeamById(teamId);
     }
 
     @Transactional
@@ -354,7 +388,7 @@ public class TournamentService {
         Team team = teamRepository.findByTournamentIdAndId(tournamentId, teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
-        team.setCheckedIn(false);
+        teamRepository.uncheckInTeamById(teamId);
     }
 
     /**
@@ -377,6 +411,10 @@ public class TournamentService {
 
         TournamentCheckResult checkResult = tournamentRepository.checkTournament(tournamentId);
 
+        if(checkResult.getStarted()) {
+            throw new IllegalArgumentException("Tournament is already started");
+        }
+
         if(checkResult.getUncheckedIn() > 0) {
             error = true;
             errorMessage.append("Not all teams are not checked in\n");;
@@ -384,7 +422,7 @@ public class TournamentService {
 
         if(checkResult.getJudgeCount() == 0) {
             error = true;
-            errorMessage.append("Tournament has no judges\n");
+            errorMessage.append("Tournament has no checked-in judges\n");
         }
 
         Round firstRound = tournamentRepository.findRound(tournamentId, RoundGroupType.PRELIMINARY, 1);
@@ -410,7 +448,9 @@ public class TournamentService {
     }
 
     private void setTeamsOfFirstRound(Round round) {
-        round.setTeams(round.getRoundGroup().getTournament().getTeams());
+        List<Team> teams = round.getTeams();
+        teams.clear();
+        teams.addAll(round.getRoundGroup().getTournament().getTeams());
     }
 
     //TOURNAMENT DISABLING & DELETING

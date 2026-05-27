@@ -90,7 +90,7 @@ public class ParticipantInvitationService {
         Team team = teamRepository.findFullById(teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
 
-        if(!team.getMembers().stream().anyMatch(member -> member.getId().equals(inviterId))) {
+        if(!team.getMembers().stream().anyMatch(member -> member.getParticipantProfile().getUser().getId().equals(inviterId))) {
             throw new IllegalArgumentException("Inviter is not a member of the team");
         }
 
@@ -103,7 +103,7 @@ public class ParticipantInvitationService {
     /**
      * Should only be used for tournament creation initial invitations
      * @param inviterId
-     * @param inviteeIds
+     * @param inviteeUsernames
      * @param teamId
      * @return
      */
@@ -111,8 +111,6 @@ public class ParticipantInvitationService {
     public List<ParticipantInvitation> createInvitations(Long inviterId, Collection<String> inviteeUsernames, Long teamId) {
         Team team = teamRepository.findFullById(teamId)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found"));
-
-        teamService.validateTeamSize(team);
 
         List<ParticipantInvitation> invitations = inviteeUsernames.stream()
                 .map(inviteeUsername -> buildInvitation(inviterId, inviteeUsername, team))
@@ -142,6 +140,7 @@ public class ParticipantInvitationService {
         TournamentParticipant participant = new TournamentParticipant();
         participant.setTeam(team);
         participant.setParticipantProfile(invitation.getInvitee());
+        participant.setSpeakerScore(0);
 
         tournamentParticipantRepository.save(participant);
 

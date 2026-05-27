@@ -1,5 +1,6 @@
 package com.heliozz10.debetter.content.user.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.heliozz10.debetter.content.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -26,6 +27,7 @@ public abstract class Profile {
     @GeneratedValue
     private Long id;
 
+    @JsonIgnore
     @IndexedEmbedded
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id")

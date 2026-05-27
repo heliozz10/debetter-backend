@@ -71,8 +71,9 @@ public interface TournamentRepository extends JpaRepository<Tournament, Long>, J
 
     @Query(value = """
         SELECT
+          (SELECT started FROM tournament WHERE id = :tournamentId) AS started,
           SUM(CASE WHEN t.checked_in = false THEN 1 ELSE 0 END) AS unchecked_in,
-          (SELECT COUNT(*) FROM judge j WHERE j.tournament_id = :tournamentId) AS judge_count,
+          (SELECT COUNT(*) FROM judge j WHERE j.tournament_id = :tournamentId AND j.checked_in) AS judge_count,
           COUNT(*) AS team_count
         FROM team t
         WHERE t.tournament_id = :tournamentId

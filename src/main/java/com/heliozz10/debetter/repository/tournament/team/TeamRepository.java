@@ -20,6 +20,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @EntityGraph(value = "Team.full", type = EntityGraph.EntityGraphType.LOAD)
     Optional<Team> findFullById(Long id);
 
+    @EntityGraph(value = "Team.full", type = EntityGraph.EntityGraphType.LOAD)
     Page<Team> findByTournamentId(Long tournamentId, Pageable pageable);
 
     List<Team> findByTournamentAndDisqualifiedFalse(Tournament tournament);

@@ -1,6 +1,8 @@
 package com.heliozz10.debetter.controller;
 
 import com.heliozz10.debetter.content.News;
+import com.heliozz10.debetter.content.tournament.round.Round;
+import com.heliozz10.debetter.content.tournament.round.RoundGroup;
 import com.heliozz10.debetter.content.user.Role;
 import com.heliozz10.debetter.content.user.User;
 import com.heliozz10.debetter.content.user.profile.OrganizerProfile;
@@ -9,7 +11,11 @@ import com.heliozz10.debetter.dto.in.NewsDto;
 import com.heliozz10.debetter.dto.in.NewsGetParams;
 import com.heliozz10.debetter.dto.out.NewsView;
 import com.heliozz10.debetter.mapper.NewsMapper;
+import com.heliozz10.debetter.repository.tournament.round.RoundGroupRepository;
+import com.heliozz10.debetter.repository.tournament.round.RoundRepository;
 import com.heliozz10.debetter.service.NewsService;
+import com.heliozz10.debetter.service.tournament.round.RoundGroupService;
+import com.heliozz10.debetter.service.tournament.round.RoundService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +34,20 @@ import java.util.List;
 @RequestMapping("/news")
 public class NewsController {
     private final NewsService newsService;
+
+    private final RoundService roundService;
+    private final RoundRepository roundRepository;
+
+    private final RoundGroupRepository roundGroupRepository;
+
+    @GetMapping("/test")
+    public void test() {
+        Round round = roundRepository.findByRoundGroup_IdAndRoundNumber(152L, 1).orElseThrow();
+        roundService.generateMatchesAndAssignJudges(round);
+        RoundGroup roundGroup = roundGroupRepository.findById(152L).orElseThrow();
+        roundGroup.setCurrentRoundNumber(roundGroup.getCurrentRoundNumber() + 1);
+        roundGroupRepository.save(roundGroup);
+    }
 
     @GetMapping
     public PageableResult<NewsView> getNews(

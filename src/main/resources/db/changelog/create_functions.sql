@@ -15,7 +15,7 @@ BEGIN
         )
     )
 
-    UPDATE match m
+    UPDATE "match" m
     SET team1score    = COALESCE(i.team1score, m.team1score),
         team2score    = COALESCE(i.team2score, m.team2score),
         team3score    = COALESCE(i.team3score, m.team3score),
@@ -86,7 +86,12 @@ DECLARE
     v_tournament_id BIGINT;
     v_judge_count INT;
 BEGIN
-    SELECT tournament_id INTO v_tournament_id FROM round WHERE id = p_round_id;
+    SELECT rg.tournament_id
+    INTO v_tournament_id
+    FROM round r
+    JOIN round_group rg
+      ON r.round_group_id = rg.id
+    WHERE r.id = p_round_id;
 
     SELECT COUNT(*) INTO v_judge_count FROM judge WHERE tournament_id = v_tournament_id AND checked_in = true;
 

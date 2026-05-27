@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Objects;
 
 @RequiredArgsConstructor
@@ -90,6 +91,8 @@ public class TeamService {
         view.setMembers(team.getMembers().stream().map(tournamentParticipantService::toSimpleTournamentParticipantView).toList());
         return view;
     }
+
+    public List<TeamView> toTeamViews(List<Team> teams) { return teams.stream().map(this::toTeamView).toList(); }
 
     /**
      * Validates that adding one more member won't exceed max size.

@@ -34,13 +34,13 @@ public class TeamController {
 
     @PreAuthorize("@tournamentSecurity.hasViewPermission(principal, #tournamentId)")
     @GetMapping
-    public PageableResult<SimpleTeamView> getTeamsByTournamentId(
+    public PageableResult<TeamView> getTeamsByTournamentId(
             @PathVariable Long tournamentId,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
         Page<Team> teams = teamService.getTeamsByTournamentId(tournamentId, pageable);
         return new PageableResult<>(
-                teamMapper.toSimpleTeamViews(teams.getContent()),
+                teamService.toTeamViews(teams.getContent()),
                 teams.getTotalElements(),
                 teams.getTotalPages()
         );

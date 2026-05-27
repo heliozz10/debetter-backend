@@ -11,6 +11,8 @@ import com.heliozz10.debetter.repository.tournament.TournamentParticipantReposit
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class TournamentParticipantService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TournamentParticipantService.class);
+
     private final EntityManager entityManager;
 
     private final TournamentParticipantRepository tournamentParticipantRepository;
@@ -49,6 +53,7 @@ public class TournamentParticipantService {
     public TournamentParticipantView toTournamentParticipantView(TournamentParticipant tournamentParticipant) {
         TournamentParticipantView view = tournamentParticipantMapper.toTournamentParticipantView(tournamentParticipant);
         view.setUser(userMapper.toSimpleUserView(tournamentParticipant.getParticipantProfile().getUser()));
+        LOGGER.info(view.toString());
         return view;
     }
 }

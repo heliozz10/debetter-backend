@@ -1,8 +1,10 @@
 package com.heliozz10.debetter.controller.util.media;
 
 import com.heliozz10.debetter.service.util.media.FileService;
+import com.heliozz10.debetter.service.util.media.FileUploadProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -21,10 +23,13 @@ import java.nio.file.Path;
 public class FileController {
     private final FileService fileService;
 
+    private final Environment environment;
+
     @GetMapping("/**")
     public ResponseEntity<Resource> serveFile(HttpServletRequest request) {
-        String requestUri = request.getRequestURI(); // e.g. /uploads/images/foo/bar.png
-        String fullUrl = requestUri; // already matches Url.url since prefix is /uploads
+        String requestUri = request.getRequestURI(); // e.g. /api/uploads/images/foo/bar.png
+        final String servletPath = environment.getProperty("spring.mvc.servlet.path");
+        String fullUrl = requestUri.startsWith(servletPath) ? requestUri.substring(servletPath.length()) : requestUri;
 
         Path filePath = fileService.resolveFilePathByUrl(fullUrl);
 

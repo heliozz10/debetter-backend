@@ -49,6 +49,7 @@ public class JudgeService {
         Judge judge = judgeMapper.toJudge(judgeFormDto);
 
         judge.setTournament(tournament);
+        if (judgeFormDto.checkedIn() == null) judge.setCheckedIn(false);
         judge.setTimesJudged(0);
 
         return judgeRepository.save(judge);

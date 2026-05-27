@@ -25,7 +25,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -68,7 +67,6 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll(spec, pageable);
     }
 
-    @Cacheable(value = "userById", key = "#userId")
     @Transactional(readOnly = true)
     public User getUserById(Long userId) {
         return userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -87,7 +85,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
-    @CacheEvict(value = "userById", key = "#userId")
+    @CacheEvict(value = "currentUser", key = "#userId")
     @Transactional
     public User updateUser(UserUpdateDto dto, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -105,6 +103,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
+    @CacheEvict(value = "currentUser", key = "#userId")
     @Transactional
     public void addOrUpdateProfilePicture(Long userId, MultipartFile file) {
         Url url = fileService.uploadImage(file, "profile-pictures", UUID.randomUUID().toString());
@@ -114,6 +113,7 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    @CacheEvict(value = "currentUser", key = "#userId")
     @Transactional
     public void deleteProfilePicture(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -121,6 +121,7 @@ public class UserService implements UserDetailsService {
         user.setImageUrl(null);
     }
 
+    @CacheEvict(value = "currentUser", key = "#userId")
     @Transactional
     public void addOrUpdateSocialProfiles(Long userId, Collection<SocialProfileDto> newProfiles) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -131,17 +132,21 @@ public class UserService implements UserDetailsService {
     public void addOrUpdateSocialProfiles(User user, Collection<SocialProfileDto> newProfiles) {
         Map<SocialPlatform, SocialProfile> currentProfiles = user.getSocialProfiles()
                 .stream()
-                .collect(Collectors.toMap(SocialProfile::getPlatform, sp -> sp));
+                .collect(Collectors.toMap(SocialProfile::getSocialPlatform, sp -> sp));
+
+        if(newProfiles == null) {
+            return;
+        }
 
         for (SocialProfileDto dto : newProfiles) {
-            SocialProfile existing = currentProfiles.get(dto.platform());
+            SocialProfile existing = currentProfiles.get(dto.socialPlatform());
 
             if (existing != null) {
                 existing.setHandle(dto.handle());
                 existing.setIsPublic(dto.isPublic() != null ? dto.isPublic() : true);
             } else {
                 SocialProfile newProfile = new SocialProfile();
-                newProfile.setPlatform(dto.platform());
+                newProfile.setSocialPlatform(dto.socialPlatform());
                 newProfile.setHandle(dto.handle());
                 newProfile.setIsPublic(dto.isPublic() != null ? dto.isPublic() : true);
                 user.getSocialProfiles().add(newProfile);
@@ -149,12 +154,14 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    @CacheEvict(value = "currentUser", key = "#userId")
     @Transactional
     public void removeAllSocialProfiles(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
         user.getSocialProfiles().clear();
     }
 
+    @CacheEvict(value = "currentUser", key = "#userId")
     @Transactional
     public void removeSocialProfiles(Long userId, Collection<SocialPlatform> platforms) {
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -164,7 +171,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void removeSocialProfiles(User user, Collection<SocialPlatform> platforms) {
         for (SocialPlatform platform : platforms) {
-            user.getSocialProfiles().removeIf(sp -> sp.getPlatform() == platform);
+            user.getSocialProfiles().removeIf(sp -> sp.getSocialPlatform() == platform);
         }
     }
 
